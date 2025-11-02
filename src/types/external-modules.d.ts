@@ -1,0 +1,5 @@
+declare module 'pg'
+declare module 'mssql'
+declare module 'mongodb'
+declare module 'better-sqlite3'
+declare module 'dotenv/config'
