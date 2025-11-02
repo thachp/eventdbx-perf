@@ -260,8 +260,14 @@ test("benchmarks postgres operations", async (t) => {
         [aggregateType]
       );
       const aggregateIds = aggregateRows
-        .map((row: Record<string, unknown>) => row.aggregate_id as string | undefined)
-        .filter((value: string | undefined): value is string => typeof value === "string");
+        .map(
+          (row: Record<string, unknown>) =>
+            row.aggregate_id as string | undefined
+        )
+        .filter(
+          (value: string | undefined): value is string =>
+            typeof value === "string"
+        );
       if (aggregateIds.length === 0) {
         throw new Error("Postgres dataset is empty");
       }

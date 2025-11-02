@@ -6,8 +6,8 @@ type ExecutionContext = import("ava").ExecutionContext;
 type BenchInstance = Bench;
 
 export const aggregateType = "account";
-export const listLimit = 10;
-export const eventsLimit = 10;
+export const listLimit = 100;
+export const eventsLimit = 100;
 export const projectionFields = ["state.field1", "state.field2"] as const;
 
 export const datasetSizes = [
