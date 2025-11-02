@@ -255,15 +255,20 @@ test("benchmarks postgres operations", async (t) => {
 
       const bench = createBench(`Postgres ${datasetLabel}`);
 
-      const pickAggregateId = async () => {
-        const { rows } = await pool.query(
-          "SELECT aggregate_id FROM bench_aggregates WHERE category = $1 ORDER BY aggregate_id ASC LIMIT 1",
-          [aggregateType]
-        );
-        const aggregateId = rows[0]?.aggregate_id as string | undefined;
-        if (!aggregateId) {
-          throw new Error("Postgres dataset is empty");
-        }
+      const { rows: aggregateRows } = await pool.query(
+        "SELECT aggregate_id FROM bench_aggregates WHERE category = $1 ORDER BY aggregate_id ASC",
+        [aggregateType]
+      );
+      const aggregateIds = aggregateRows
+        .map((row: Record<string, unknown>) => row.aggregate_id as string | undefined)
+        .filter((value: string | undefined): value is string => typeof value === "string");
+      if (aggregateIds.length === 0) {
+        throw new Error("Postgres dataset is empty");
+      }
+      let aggregateCursor = 0;
+      const pickAggregateId = () => {
+        const aggregateId = aggregateIds[aggregateCursor];
+        aggregateCursor = (aggregateCursor + 1) % aggregateIds.length;
         return aggregateId;
       };
 
@@ -279,9 +284,9 @@ test("benchmarks postgres operations", async (t) => {
         [
           "get",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await pool.query(
-              "SELECT state FROM bench_aggregates WHERE aggregate_id = $1",
+              "SELECT * FROM bench_aggregates WHERE aggregate_id = $1",
               [aggregateId]
             );
           },
@@ -289,7 +294,7 @@ test("benchmarks postgres operations", async (t) => {
         [
           "select",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await pool.query(
               `SELECT ${projectionFields
                 .map(
@@ -304,9 +309,9 @@ test("benchmarks postgres operations", async (t) => {
         [
           "events",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await pool.query(
-              "SELECT event_type, payload FROM bench_events WHERE aggregate_id = $1 ORDER BY created_at ASC LIMIT $2::int",
+              "SELECT * FROM bench_events WHERE aggregate_id = $1 ORDER BY created_at ASC LIMIT $2::int",
               [aggregateId, eventsLimit]
             );
           },
@@ -314,7 +319,7 @@ test("benchmarks postgres operations", async (t) => {
         [
           "apply",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await pool.query(
               "INSERT INTO bench_events (aggregate_id, category, event_type, payload, created_at) VALUES ($1, $2, $3, $4, NOW())",
               [
@@ -362,7 +367,7 @@ test("benchmarks postgres operations", async (t) => {
         [
           "archive",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await pool.query(
               "UPDATE bench_aggregates SET archived = TRUE, state = jsonb_set(state, '{archived}', 'true'::jsonb), updated_at = NOW() WHERE aggregate_id = $1",
               [aggregateId]
@@ -372,7 +377,7 @@ test("benchmarks postgres operations", async (t) => {
         [
           "restore",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await pool.query(
               "UPDATE bench_aggregates SET archived = FALSE, state = jsonb_set(state, '{archived}', 'false'::jsonb), updated_at = NOW() WHERE aggregate_id = $1",
               [aggregateId]
@@ -382,7 +387,7 @@ test("benchmarks postgres operations", async (t) => {
         [
           "patch",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await pool.query(
               "UPDATE bench_aggregates SET state = jsonb_set(state, '{name}', to_jsonb('New Name'::text)), updated_at = NOW() WHERE aggregate_id = $1",
               [aggregateId]

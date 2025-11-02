@@ -3,15 +3,16 @@ import { randomUUID } from "node:crypto";
 
 import type { AsyncOperation } from "./bench-shared.js";
 import {
+  addBenchTask,
   aggregateType,
   createBench,
   datasetSizes,
   eventsLimit,
+  formatAggregateId,
   formatDatasetLabel,
   listLimit,
-  logDatasetPreparation,
   loadOptionalModule,
-  addBenchTask,
+  logDatasetPreparation,
   runOperation,
   summarizeBench,
   toErrorMessage,
@@ -145,13 +146,13 @@ const ensureMssqlDataset = async (
       )
       INSERT INTO dbo.benchAggregates (aggregate_id, category, state, archived, updated_at)
       SELECT
-        CAST(idx AS NVARCHAR(255)),
+        agg.aggregate_id,
         @category,
         (
           SELECT
-            CONCAT('value-', idx) AS field1,
+            CONCAT('value-', agg.aggregate_id) AS field1,
             idx AS field2,
-            CONCAT('Account ', idx) AS name,
+            CONCAT('Account ', agg.aggregate_id) AS name,
             CAST(0 AS BIT) AS archived,
             CAST(1 AS BIT) AS benchDataset
           FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
@@ -159,9 +160,13 @@ const ensureMssqlDataset = async (
         0,
         SYSUTCDATETIME()
       FROM numbers
+      CROSS APPLY (
+        SELECT RIGHT(CONCAT(REPLICATE('0', 16), CAST(numbers.idx AS NVARCHAR(16))), 16) AS aggregate_id
+      ) AS agg
       WHERE NOT EXISTS (
-        SELECT 1 FROM dbo.benchAggregates a
-        WHERE a.aggregate_id = CAST(numbers.idx AS NVARCHAR(255))
+        SELECT 1
+        FROM dbo.benchAggregates a
+        WHERE a.aggregate_id = agg.aggregate_id
       );
     `);
 
@@ -178,20 +183,23 @@ const ensureMssqlDataset = async (
       )
       INSERT INTO dbo.benchEvents (aggregate_id, category, event_type, payload, created_at)
       SELECT
-        CAST(idx AS NVARCHAR(255)),
+        agg.aggregate_id,
         @category,
         'Created',
         (
           SELECT
-            CONCAT('value-', idx) AS field1,
+            CONCAT('value-', agg.aggregate_id) AS field1,
             idx AS field2,
-            CONCAT('Account ', idx) AS name,
+            CONCAT('Account ', agg.aggregate_id) AS name,
             CAST(1 AS INT) AS version,
             CAST(1 AS BIT) AS benchDataset
           FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
         ),
         SYSUTCDATETIME()
-      FROM numbers;
+      FROM numbers
+      CROSS APPLY (
+        SELECT RIGHT(CONCAT(REPLICATE('0', 16), CAST(numbers.idx AS NVARCHAR(16))), 16) AS aggregate_id
+      ) AS agg;
     `);
 
   return targetSize;
@@ -213,12 +221,15 @@ test("benchmarks mssql operations", async (t) => {
     return;
   }
 
-  const { module: sqlModule, error: sqlLoadError } =
-    await loadOptionalModule<typeof import("mssql")>("mssql");
+  const { module: sqlModule, error: sqlLoadError } = await loadOptionalModule<
+    typeof import("mssql")
+  >("mssql");
   if (!sqlModule) {
     const message =
       sqlLoadError !== undefined
-        ? `Skipping MSSQL benchmark – unable to load mssql module: ${toErrorMessage(sqlLoadError)}`
+        ? `Skipping MSSQL benchmark – unable to load mssql module: ${toErrorMessage(
+            sqlLoadError
+          )}`
         : "Skipping MSSQL benchmark – mssql module not available";
     t.log(message);
     t.pass();
@@ -242,7 +253,9 @@ test("benchmarks mssql operations", async (t) => {
     const skipOnTimeout = (error: unknown) => {
       if (isMssqlTimeoutError(error)) {
         t.log(
-          `Skipping MSSQL benchmark – request timed out: ${toErrorMessage(error)}`
+          `Skipping MSSQL benchmark – request timed out: ${toErrorMessage(
+            error
+          )}`
         );
         t.pass();
         return true;
@@ -267,17 +280,23 @@ test("benchmarks mssql operations", async (t) => {
 
       const bench = createBench(`MSSQL ${datasetLabel}`);
 
-      const pickAggregateId = async () => {
-        const { recordset } = await pool
-          .request()
-          .input("category", sql.NVarChar, aggregateType)
-          .query(
-            "SELECT TOP (1) aggregate_id FROM dbo.benchAggregates WHERE category = @category ORDER BY CAST(aggregate_id AS INT) ASC"
-          );
-        const aggregateId = recordset[0]?.aggregate_id as string | undefined;
-        if (!aggregateId) {
-          throw new Error("MSSQL aggregate set is empty");
-        }
+      const { recordset: aggregateRecords } = await pool
+        .request()
+        .input("category", sql.NVarChar, aggregateType)
+        .query(
+          "SELECT aggregate_id FROM dbo.benchAggregates WHERE category = @category ORDER BY aggregate_id ASC"
+        );
+
+      const aggregateIds = aggregateRecords
+        .map((row) => row.aggregate_id as string | undefined)
+        .filter((value): value is string => Boolean(value));
+      if (aggregateIds.length === 0) {
+        throw new Error("MSSQL aggregate set is empty");
+      }
+      let aggregateCursor = 0;
+      const pickAggregateId = () => {
+        const aggregateId = aggregateIds[aggregateCursor];
+        aggregateCursor = (aggregateCursor + 1) % aggregateIds.length;
         return aggregateId;
       };
 
@@ -290,14 +309,14 @@ test("benchmarks mssql operations", async (t) => {
               .input("category", sql.NVarChar, aggregateType)
               .input("limit", sql.Int, pageSize)
               .query(
-                "SELECT TOP (@limit) aggregate_id FROM dbo.benchAggregates WHERE category = @category AND archived = 0 ORDER BY CAST(aggregate_id AS INT) ASC"
+                "SELECT TOP (@limit) aggregate_id FROM dbo.benchAggregates WHERE category = @category AND archived = 0 ORDER BY aggregate_id ASC"
               );
           },
         ],
         [
           "get",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await pool
               .request()
               .input("category", sql.NVarChar, aggregateType)
@@ -310,7 +329,7 @@ test("benchmarks mssql operations", async (t) => {
         [
           "select",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await pool
               .request()
               .input("category", sql.NVarChar, aggregateType)
@@ -323,7 +342,7 @@ test("benchmarks mssql operations", async (t) => {
         [
           "events",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await pool
               .request()
               .input("category", sql.NVarChar, aggregateType)
@@ -337,7 +356,7 @@ test("benchmarks mssql operations", async (t) => {
         [
           "apply",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await pool
               .request()
               .input("category", sql.NVarChar, aggregateType)
@@ -396,7 +415,7 @@ test("benchmarks mssql operations", async (t) => {
         [
           "archive",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await pool
               .request()
               .input("category", sql.NVarChar, aggregateType)
@@ -409,7 +428,7 @@ test("benchmarks mssql operations", async (t) => {
         [
           "restore",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await pool
               .request()
               .input("category", sql.NVarChar, aggregateType)
@@ -422,7 +441,7 @@ test("benchmarks mssql operations", async (t) => {
         [
           "patch",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await pool
               .request()
               .input("category", sql.NVarChar, aggregateType)

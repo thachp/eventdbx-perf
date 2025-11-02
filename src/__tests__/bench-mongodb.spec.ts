@@ -2,15 +2,16 @@ import test from "ava";
 import { randomUUID } from "node:crypto";
 
 import {
+  addBenchTask,
   aggregateType,
   createBench,
   datasetSizes,
   eventsLimit,
+  formatAggregateId,
   formatDatasetLabel,
   listLimit,
   loadOptionalModule,
   logDatasetPreparation,
-  addBenchTask,
   projectionFields,
   summarizeBench,
   toErrorMessage,
@@ -62,20 +63,21 @@ const ensureMongoDataset = async (
     const eventDocs: Array<Record<string, unknown>> = [];
 
     for (let index = inserted; index < upperBound; index += 1) {
-      const aggregateId = String(index + 1);
-      const name = `Account ${index + 1}`;
+      const position = index + 1;
+      const aggregateId = formatAggregateId(position);
+      const name = `Account ${position}`;
       aggregateDocs.push({
         _id: aggregateId,
         aggregateId,
         category: aggregateType,
         state: {
-          field1: `value-${index + 1}`,
-          field2: index + 1,
+          field1: `value-${aggregateId}`,
+          field2: position,
           name,
           archived: false,
         },
         archived: false,
-        index: index + 1,
+        index: position,
         benchDataset: true,
         updatedAt: new Date(),
       });
@@ -84,8 +86,8 @@ const ensureMongoDataset = async (
         category: aggregateType,
         eventType: "Created",
         payload: {
-          field1: `value-${index + 1}`,
-          field2: index + 1,
+          field1: `value-${aggregateId}`,
+          field2: position,
           name,
           version: 1,
         },
@@ -199,18 +201,24 @@ test("benchmarks mongodb operations", async (t) => {
 
       const bench = createBench(`MongoDB ${datasetLabel}`);
 
-      const pickAggregateId = async () => {
-        const document = await aggregatesCollection
-          .find({ category: aggregateType })
-          .sort({ index: 1 })
-          .project({ aggregateId: 1 })
-          .limit(1)
-          .next();
-        const aggregateId = (document as { aggregateId?: string } | null)
-          ?.aggregateId;
-        if (!aggregateId) {
-          throw new Error("MongoDB aggregates collection is empty");
-        }
+      const aggregateDocs = await aggregatesCollection
+        .find({ category: aggregateType })
+        .sort({ index: 1 })
+        .project({ aggregateId: 1, _id: 0 })
+        .toArray();
+      const aggregateIds = aggregateDocs
+        .map(
+          (doc: { aggregateId?: unknown }) =>
+            (typeof doc.aggregateId === "string" ? doc.aggregateId : undefined)
+        )
+        .filter((value: string | undefined): value is string => typeof value === "string");
+      if (aggregateIds.length === 0) {
+        throw new Error("MongoDB aggregates collection is empty");
+      }
+      let aggregateCursor = 0;
+      const pickAggregateId = () => {
+        const aggregateId = aggregateIds[aggregateCursor];
+        aggregateCursor = (aggregateCursor + 1) % aggregateIds.length;
         return aggregateId;
       };
 
@@ -228,7 +236,7 @@ test("benchmarks mongodb operations", async (t) => {
         [
           "get",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await aggregatesCollection.findOne({
               aggregateId,
               category: aggregateType,
@@ -238,7 +246,7 @@ test("benchmarks mongodb operations", async (t) => {
         [
           "select",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await aggregatesCollection.findOne(
               { aggregateId, category: aggregateType },
               {
@@ -254,7 +262,7 @@ test("benchmarks mongodb operations", async (t) => {
         [
           "events",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await eventsCollection
               .find({ aggregateId, category: aggregateType })
               .sort({ createdAt: 1 })
@@ -265,7 +273,7 @@ test("benchmarks mongodb operations", async (t) => {
         [
           "apply",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await eventsCollection.insertOne({
               aggregateId,
               category: aggregateType,
@@ -314,7 +322,7 @@ test("benchmarks mongodb operations", async (t) => {
         [
           "archive",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await aggregatesCollection.updateOne(
               { aggregateId, category: aggregateType },
               {
@@ -330,7 +338,7 @@ test("benchmarks mongodb operations", async (t) => {
         [
           "restore",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await aggregatesCollection.updateOne(
               { aggregateId, category: aggregateType },
               {
@@ -346,7 +354,7 @@ test("benchmarks mongodb operations", async (t) => {
         [
           "patch",
           async () => {
-            const aggregateId = await pickAggregateId();
+            const aggregateId = pickAggregateId();
             await aggregatesCollection.updateOne(
               { aggregateId, category: aggregateType },
               {

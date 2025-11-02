@@ -6,18 +6,32 @@ type ExecutionContext = import("ava").ExecutionContext;
 type BenchInstance = Bench;
 
 export const aggregateType = "account";
-export const sampleAggregateId = "1";
 export const listLimit = 10;
 export const eventsLimit = 10;
 export const projectionFields = ["state.field1", "state.field2"] as const;
 
-export const datasetSizes = [1_000, 10_000, 100_000, 1_000_000] as const;
+export const datasetSizes = [
+  10, 100, 1000, 10_000, 100_000, 1_000_000, 5_000_000,
+] as const;
+
+export const formatAggregateId = (index: number) =>
+  String(index).padStart(16, "0");
+
+const aggregateCursors = new Map<number, number>();
+
+export const sampleAggregateId = (size: number) => {
+  const limit = Math.max(1, Math.trunc(size));
+  const current = aggregateCursors.get(limit) ?? 0;
+  const next = (current + 1) % limit;
+  aggregateCursors.set(limit, next);
+  return formatAggregateId(current + 1);
+};
 
 export const operationDetails: Record<string, string> = {
-  list: "aggregate listing (latest 10)",
+  list: "aggregate listing (latest x)",
   get: "load aggregate snapshot",
   select: "project selected fields",
-  events: "read event stream (latest 10)",
+  events: "read event stream (latest x)",
   apply: "append event",
   create: "create aggregate",
   archive: "archive aggregate",
