@@ -12,6 +12,7 @@ import {
   formatDatasetLabel,
   listLimit,
   logDatasetPreparation,
+  logRunModeNotice,
   projectionFields,
   runOperation,
   summarizeBench,
@@ -280,99 +281,98 @@ test("benchmarks postgres operations", async (t) => {
         return aggregateId;
       };
 
-      const operations: Array<[string, AsyncOperation]> = filterBenchOperations(
+      const benchOperations: Array<[string, AsyncOperation]> = [
         [
-          [
-            "list",
-            () =>
-              pool.query(
-                "SELECT * FROM bench_aggregates WHERE category = $1 AND archived = FALSE ORDER BY aggregate_id ASC LIMIT $2::int",
-                [aggregateType, pageSize]
-              ),
-          ],
-          [
-            "get",
-            async () => {
-              const aggregateId = pickAggregateId();
-              await pool.query(
-                "SELECT * FROM bench_aggregates WHERE aggregate_id = $1",
-                [aggregateId]
-              );
-            },
-          ],
-          [
-            "select",
-            async () => {
-              const aggregateId = pickAggregateId();
-              await pool.query(
-                `SELECT ${projectionFields
-                  .map(
-                    (field) =>
-                      `state ->> '${field.split(".").at(-1)}' AS "${field}"`
-                  )
-                  .join(", ")} FROM bench_aggregates WHERE aggregate_id = $1`,
-                [aggregateId]
-              );
-            },
-          ],
-          [
-            "events",
-            async () => {
-              const aggregateId = pickAggregateId();
-              await pool.query(
-                "SELECT * FROM bench_events WHERE aggregate_id = $1 ORDER BY created_at ASC LIMIT $2::int",
-                [aggregateId, eventsLimit]
-              );
-            },
-          ],
-          [
-            "apply",
-            async () => {
-              const aggregateId = pickAggregateId();
-              await pool.query(
-                "INSERT INTO bench_events (aggregate_id, category, event_type, payload, created_at) VALUES ($1, $2, $3, $4, NOW())",
-                [
-                  aggregateId,
-                  aggregateType,
-                  "BenchApplied",
-                  { marker: "apply", at: new Date().toISOString() },
-                ]
-              );
-            },
-          ],
-          [
-            "create",
-            async () => {
-              const aggregateId = `bench-${randomUUID()}`;
-              await pool.query(
-                "INSERT INTO bench_aggregates (aggregate_id, category, state, archived, updated_at) VALUES ($1, $2, $3, FALSE, NOW())",
-                [
-                  aggregateId,
-                  aggregateType,
-                  {
-                    field1: "value-bench",
-                    field2: 0,
-                    name: "Benchmark Account",
-                    archived: false,
-                  },
-                ]
-              );
-              await pool.query(
-                "INSERT INTO bench_events (aggregate_id, category, event_type, payload, created_at) VALUES ($1, $2, $3, $4, NOW())",
-                [
-                  aggregateId,
-                  aggregateType,
-                  "Created",
-                  {
-                    name: "Benchmark Account",
-                    createdAt: new Date().toISOString(),
-                    field1: "value-bench",
-                    field2: 0,
-                  },
-                ]
-              );
-            },
-          ],
+          "list",
+          () =>
+            pool.query(
+              "SELECT * FROM bench_aggregates WHERE category = $1 AND archived = FALSE ORDER BY aggregate_id ASC LIMIT $2::int",
+              [aggregateType, pageSize]
+            ),
+        ],
+        [
+          "get",
+          async () => {
+            const aggregateId = pickAggregateId();
+            await pool.query(
+              "SELECT * FROM bench_aggregates WHERE aggregate_id = $1",
+              [aggregateId]
+            );
+          },
+        ],
+        [
+          "select",
+          async () => {
+            const aggregateId = pickAggregateId();
+            await pool.query(
+              `SELECT ${projectionFields
+                .map(
+                  (field) =>
+                    `state ->> '${field.split(".").at(-1)}' AS "${field}"`
+                )
+                .join(", ")} FROM bench_aggregates WHERE aggregate_id = $1`,
+              [aggregateId]
+            );
+          },
+        ],
+        [
+          "events",
+          async () => {
+            const aggregateId = pickAggregateId();
+            await pool.query(
+              "SELECT * FROM bench_events WHERE aggregate_id = $1 ORDER BY created_at ASC LIMIT $2::int",
+              [aggregateId, eventsLimit]
+            );
+          },
+        ],
+        [
+          "apply",
+          async () => {
+            const aggregateId = pickAggregateId();
+            await pool.query(
+              "INSERT INTO bench_events (aggregate_id, category, event_type, payload, created_at) VALUES ($1, $2, $3, $4, NOW())",
+              [
+                aggregateId,
+                aggregateType,
+                "BenchApplied",
+                { marker: "apply", at: new Date().toISOString() },
+              ]
+            );
+          },
+        ],
+        [
+          "create",
+          async () => {
+            const aggregateId = `bench-${randomUUID()}`;
+            await pool.query(
+              "INSERT INTO bench_aggregates (aggregate_id, category, state, archived, updated_at) VALUES ($1, $2, $3, FALSE, NOW())",
+              [
+                aggregateId,
+                aggregateType,
+                {
+                  field1: "value-bench",
+                  field2: 0,
+                  name: "Benchmark Account",
+                  archived: false,
+                },
+              ]
+            );
+            await pool.query(
+              "INSERT INTO bench_events (aggregate_id, category, event_type, payload, created_at) VALUES ($1, $2, $3, $4, NOW())",
+              [
+                aggregateId,
+                aggregateType,
+                "Created",
+                {
+                  name: "Benchmark Account",
+                  createdAt: new Date().toISOString(),
+                  field1: "value-bench",
+                  field2: 0,
+                },
+              ]
+            );
+          },
+        ],
         [
           "archive",
           async () => {
@@ -413,32 +413,35 @@ test("benchmarks postgres operations", async (t) => {
             );
           },
         ],
-          [
-            "patch",
-            async () => {
-              const aggregateId = pickAggregateId();
-              await pool.query(
-                "UPDATE bench_aggregates SET state = jsonb_set(state, '{name}', to_jsonb('New Name'::text)), updated_at = NOW() WHERE aggregate_id = $1",
-                [aggregateId]
-              );
-              await pool.query(
-                "INSERT INTO bench_events (aggregate_id, category, event_type, payload, created_at) VALUES ($1, $2, $3, $4, NOW())",
-                [
-                  aggregateId,
-                  aggregateType,
-                  "Patched",
-                  { name: "New Name", at: new Date().toISOString() },
-                ]
-              );
-            },
-          ],
+        [
+          "patch",
+          async () => {
+            const aggregateId = pickAggregateId();
+            await pool.query(
+              "UPDATE bench_aggregates SET state = jsonb_set(state, '{name}', to_jsonb('New Name'::text)), updated_at = NOW() WHERE aggregate_id = $1",
+              [aggregateId]
+            );
+            await pool.query(
+              "INSERT INTO bench_events (aggregate_id, category, event_type, payload, created_at) VALUES ($1, $2, $3, $4, NOW())",
+              [
+                aggregateId,
+                aggregateType,
+                "Patched",
+                { name: "New Name", at: new Date().toISOString() },
+              ]
+            );
+          },
         ],
-        {
-          onSkip: (label) =>
-            t.log(
-              `Skipping ${label} operation in mode "${benchRunMode}" for Postgres benchmark`
-            ),
-        }
+      ];
+
+      const operations = filterBenchOperations(benchOperations);
+
+      logRunModeNotice(
+        t,
+        "Postgres",
+        datasetIndex,
+        benchOperations.length,
+        operations.length
       );
 
       if (operations.length === 0) {

@@ -173,6 +173,27 @@ export const logDatasetPreparation = (
   );
 };
 
+export const logRunModeNotice = (
+  t: ExecutionContext,
+  backend: string,
+  datasetIndex: number,
+  totalOperations: number,
+  enabledOperations: number
+) => {
+  if (
+    benchRunMode === "all" ||
+    datasetIndex > 0 ||
+    enabledOperations >= totalOperations
+  ) {
+    return;
+  }
+  const modeLabel = benchRunMode === "write" ? "write-only" : "read-only";
+  const disabledType = benchRunMode === "write" ? "read" : "write";
+  t.log(
+    `${backend} benchmark running in ${modeLabel} mode; ${disabledType} operations are disabled.`
+  );
+};
+
 export type OptionalModuleResult<T> =
   | {
       module: T;

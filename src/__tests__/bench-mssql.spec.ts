@@ -14,6 +14,7 @@ import {
   listLimit,
   loadOptionalModule,
   logDatasetPreparation,
+  logRunModeNotice,
   runOperation,
   summarizeBench,
   toErrorMessage,
@@ -301,220 +302,214 @@ test("benchmarks mssql operations", async (t) => {
         return aggregateId;
       };
 
-      const operations: Array<[string, AsyncOperation]> = filterBenchOperations(
+      const benchOperations: Array<[string, AsyncOperation]> = [
         [
-          [
-            "list",
-            async () => {
-              await pool
-                .request()
-                .input("category", sql.NVarChar, aggregateType)
-                .input("limit", sql.Int, pageSize)
-                .query(
-                  "SELECT TOP (@limit) * FROM dbo.benchAggregates WHERE category = @category AND archived = 0 ORDER BY aggregate_id ASC"
-                );
-            },
-          ],
-          [
-            "get",
-            async () => {
-              const aggregateId = pickAggregateId();
-              await pool
-                .request()
-                .input("category", sql.NVarChar, aggregateType)
-                .input("id", sql.NVarChar, aggregateId)
-                .query(
-                  "SELECT state FROM dbo.benchAggregates WHERE category = @category AND aggregate_id = @id"
-                );
-            },
-          ],
-          [
-            "select",
-            async () => {
-              const aggregateId = pickAggregateId();
-              await pool
-                .request()
-                .input("category", sql.NVarChar, aggregateType)
-                .input("id", sql.NVarChar, aggregateId)
-                .query(
-                  `SELECT JSON_VALUE(state, '$.field1') AS field1, JSON_VALUE(state, '$.field2') AS field2 FROM dbo.benchAggregates WHERE category = @category AND aggregate_id = @id`
-                );
-            },
-          ],
-          [
-            "events",
-            async () => {
-              const aggregateId = pickAggregateId();
-              await pool
-                .request()
-                .input("category", sql.NVarChar, aggregateType)
-                .input("id", sql.NVarChar, aggregateId)
-                .input("limit", sql.Int, eventsLimit)
-                .query(
-                  "SELECT TOP (@limit) event_type, payload FROM dbo.benchEvents WHERE category = @category AND aggregate_id = @id ORDER BY created_at ASC"
-                );
-            },
-          ],
-          [
-            "apply",
-            async () => {
-              const aggregateId = pickAggregateId();
-              await pool
-                .request()
-                .input("category", sql.NVarChar, aggregateType)
-                .input("id", sql.NVarChar, aggregateId)
-                .input(
-                  "payload",
-                  sql.NVarChar,
-                  JSON.stringify({
-                    marker: "apply",
-                    at: new Date().toISOString(),
-                  })
-                )
-                .query(
-                  "INSERT INTO dbo.benchEvents (aggregate_id, category, event_type, payload, created_at) VALUES (@id, @category, 'BenchApplied', @payload, SYSUTCDATETIME())"
-                );
-            },
-          ],
-          [
-            "create",
-            async () => {
-              const aggregateId = `bench-${randomUUID()}`;
-              const payload = JSON.stringify({
-                field1: "value-bench",
-                field2: 0,
-                name: "Benchmark Account",
-                createdAt: new Date().toISOString(),
-                archived: false,
-              });
-
-              await pool
-                .request()
-                .input("category", sql.NVarChar, aggregateType)
-                .input("id", sql.NVarChar, aggregateId)
-                .input("state", sql.NVarChar, payload)
-                .query(
-                  "INSERT INTO dbo.benchAggregates (aggregate_id, category, state, archived, updated_at) VALUES (@id, @category, @state, 0, SYSUTCDATETIME())"
-                );
-
-              await pool
-                .request()
-                .input("category", sql.NVarChar, aggregateType)
-                .input("id", sql.NVarChar, aggregateId)
-                .input(
-                  "payload",
-                  sql.NVarChar,
-                  JSON.stringify({
-                    name: "Benchmark Account",
-                    createdAt: new Date().toISOString(),
-                  })
-                )
-                .query(
-                  "INSERT INTO dbo.benchEvents (aggregate_id, category, event_type, payload, created_at) VALUES (@id, @category, 'Created', @payload, SYSUTCDATETIME())"
-                );
-            },
-          ],
-          [
-            "archive",
-            async () => {
-              const aggregateId = pickAggregateId();
-              const archivedAt = new Date().toISOString();
-              await pool
-                .request()
-                .input("category", sql.NVarChar, aggregateType)
-                .input("id", sql.NVarChar, aggregateId)
-                .query(
-                  "UPDATE dbo.benchAggregates SET archived = 1, state = JSON_MODIFY(state, '$.archived', 1), updated_at = SYSUTCDATETIME() WHERE category = @category AND aggregate_id = @id"
-                );
-              await pool
-                .request()
-                .input("category", sql.NVarChar, aggregateType)
-                .input("id", sql.NVarChar, aggregateId)
-                .input(
-                  "payload",
-                  sql.NVarChar,
-                  JSON.stringify({
-                    note: "benchmark archive",
-                    at: archivedAt,
-                  })
-                )
-                .query(
-                  "INSERT INTO dbo.benchEvents (aggregate_id, category, event_type, payload, created_at) VALUES (@id, @category, 'Archived', @payload, SYSUTCDATETIME())"
-                );
-            },
-          ],
-          [
-            "restore",
-            async () => {
-              const aggregateId = pickAggregateId();
-              const restoredAt = new Date().toISOString();
-              await pool
-                .request()
-                .input("category", sql.NVarChar, aggregateType)
-                .input("id", sql.NVarChar, aggregateId)
-                .query(
-                  "UPDATE dbo.benchAggregates SET archived = 0, state = JSON_MODIFY(state, '$.archived', 0), updated_at = SYSUTCDATETIME() WHERE category = @category AND aggregate_id = @id"
-                );
-              await pool
-                .request()
-                .input("category", sql.NVarChar, aggregateType)
-                .input("id", sql.NVarChar, aggregateId)
-                .input(
-                  "payload",
-                  sql.NVarChar,
-                  JSON.stringify({
-                    note: "benchmark restore",
-                    at: restoredAt,
-                  })
-                )
-                .query(
-                  "INSERT INTO dbo.benchEvents (aggregate_id, category, event_type, payload, created_at) VALUES (@id, @category, 'Restored', @payload, SYSUTCDATETIME())"
-                );
-            },
-          ],
-          [
-            "patch",
-            async () => {
-              const aggregateId = pickAggregateId();
-              await pool
-                .request()
-                .input("category", sql.NVarChar, aggregateType)
-                .input("id", sql.NVarChar, aggregateId)
-                .input(
-                  "payload",
-                  sql.NVarChar,
-                  JSON.stringify({
-                    name: "New Name",
-                    at: new Date().toISOString(),
-                  })
-                )
-                .query(
-                  "UPDATE dbo.benchAggregates SET state = JSON_MODIFY(state, '$.name', 'New Name'), updated_at = SYSUTCDATETIME() WHERE category = @category AND aggregate_id = @id"
-                );
-              await pool
-                .request()
-                .input("category", sql.NVarChar, aggregateType)
-                .input("id", sql.NVarChar, aggregateId)
-                .input(
-                  "payload",
-                  sql.NVarChar,
-                  JSON.stringify({
-                    name: "New Name",
-                    at: new Date().toISOString(),
-                  })
-                )
-                .query(
-                  "INSERT INTO dbo.benchEvents (aggregate_id, category, event_type, payload, created_at) VALUES (@id, @category, 'Patched', @payload, SYSUTCDATETIME())"
-                );
-            },
-          ],
+          "list",
+          async () => {
+            await pool
+              .request()
+              .input("category", sql.NVarChar, aggregateType)
+              .input("limit", sql.Int, pageSize)
+              .query(
+                "SELECT TOP (@limit) * FROM dbo.benchAggregates WHERE category = @category AND archived = 0 ORDER BY aggregate_id ASC"
+              );
+          },
         ],
-        {
-          onSkip: (label) =>
-            t.log(
-              `Skipping ${label} operation in mode "${benchRunMode}" for MSSQL benchmark`
-            ),
-        }
+        [
+          "get",
+          async () => {
+            const aggregateId = pickAggregateId();
+            await pool
+              .request()
+              .input("category", sql.NVarChar, aggregateType)
+              .input("id", sql.NVarChar, aggregateId)
+              .query(
+                "SELECT state FROM dbo.benchAggregates WHERE category = @category AND aggregate_id = @id"
+              );
+          },
+        ],
+        [
+          "select",
+          async () => {
+            const aggregateId = pickAggregateId();
+            await pool
+              .request()
+              .input("category", sql.NVarChar, aggregateType)
+              .input("id", sql.NVarChar, aggregateId)
+              .query(
+                `SELECT JSON_VALUE(state, '$.field1') AS field1, JSON_VALUE(state, '$.field2') AS field2 FROM dbo.benchAggregates WHERE category = @category AND aggregate_id = @id`
+              );
+          },
+        ],
+        [
+          "events",
+          async () => {
+            const aggregateId = pickAggregateId();
+            await pool
+              .request()
+              .input("category", sql.NVarChar, aggregateType)
+              .input("id", sql.NVarChar, aggregateId)
+              .input("limit", sql.Int, eventsLimit)
+              .query(
+                "SELECT TOP (@limit) event_type, payload FROM dbo.benchEvents WHERE category = @category AND aggregate_id = @id ORDER BY created_at ASC"
+              );
+          },
+        ],
+        [
+          "apply",
+          async () => {
+            const aggregateId = pickAggregateId();
+            await pool
+              .request()
+              .input("category", sql.NVarChar, aggregateType)
+              .input("id", sql.NVarChar, aggregateId)
+              .input(
+                "payload",
+                sql.NVarChar,
+                JSON.stringify({
+                  marker: "apply",
+                  at: new Date().toISOString(),
+                })
+              )
+              .query(
+                "INSERT INTO dbo.benchEvents (aggregate_id, category, event_type, payload, created_at) VALUES (@id, @category, 'BenchApplied', @payload, SYSUTCDATETIME())"
+              );
+          },
+        ],
+        [
+          "create",
+          async () => {
+            const aggregateId = `bench-${randomUUID()}`;
+            const payload = JSON.stringify({
+              field1: "value-bench",
+              field2: 0,
+              name: "Benchmark Account",
+              createdAt: new Date().toISOString(),
+              archived: false,
+            });
+
+            await pool
+              .request()
+              .input("category", sql.NVarChar, aggregateType)
+              .input("id", sql.NVarChar, aggregateId)
+              .input("state", sql.NVarChar, payload)
+              .query(
+                "INSERT INTO dbo.benchAggregates (aggregate_id, category, state, archived, updated_at) VALUES (@id, @category, @state, 0, SYSUTCDATETIME())"
+              );
+
+            await pool
+              .request()
+              .input("category", sql.NVarChar, aggregateType)
+              .input("id", sql.NVarChar, aggregateId)
+              .input(
+                "payload",
+                sql.NVarChar,
+                JSON.stringify({
+                  name: "Benchmark Account",
+                  createdAt: new Date().toISOString(),
+                })
+              )
+              .query(
+                "INSERT INTO dbo.benchEvents (aggregate_id, category, event_type, payload, created_at) VALUES (@id, @category, 'Created', @payload, SYSUTCDATETIME())"
+              );
+          },
+        ],
+        [
+          "archive",
+          async () => {
+            const aggregateId = pickAggregateId();
+            const archivedAt = new Date().toISOString();
+            await pool
+              .request()
+              .input("category", sql.NVarChar, aggregateType)
+              .input("id", sql.NVarChar, aggregateId)
+              .query(
+                "UPDATE dbo.benchAggregates SET archived = 1, state = JSON_MODIFY(state, '$.archived', 1), updated_at = SYSUTCDATETIME() WHERE category = @category AND aggregate_id = @id"
+              );
+            await pool
+              .request()
+              .input("category", sql.NVarChar, aggregateType)
+              .input("id", sql.NVarChar, aggregateId)
+              .input(
+                "payload",
+                sql.NVarChar,
+                JSON.stringify({
+                  note: "benchmark archive",
+                  at: archivedAt,
+                })
+              )
+              .query(
+                "INSERT INTO dbo.benchEvents (aggregate_id, category, event_type, payload, created_at) VALUES (@id, @category, 'Archived', @payload, SYSUTCDATETIME())"
+              );
+          },
+        ],
+        [
+          "restore",
+          async () => {
+            const aggregateId = pickAggregateId();
+            const restoredAt = new Date().toISOString();
+            await pool
+              .request()
+              .input("category", sql.NVarChar, aggregateType)
+              .input("id", sql.NVarChar, aggregateId)
+              .query(
+                "UPDATE dbo.benchAggregates SET archived = 0, state = JSON_MODIFY(state, '$.archived', 0), updated_at = SYSUTCDATETIME() WHERE category = @category AND aggregate_id = @id"
+              );
+            await pool
+              .request()
+              .input("category", sql.NVarChar, aggregateType)
+              .input("id", sql.NVarChar, aggregateId)
+              .input(
+                "payload",
+                sql.NVarChar,
+                JSON.stringify({
+                  note: "benchmark restore",
+                  at: restoredAt,
+                })
+              )
+              .query(
+                "INSERT INTO dbo.benchEvents (aggregate_id, category, event_type, payload, created_at) VALUES (@id, @category, 'Restored', @payload, SYSUTCDATETIME())"
+              );
+          },
+        ],
+        [
+          "patch",
+          async () => {
+            const aggregateId = pickAggregateId();
+            await pool
+              .request()
+              .input("category", sql.NVarChar, aggregateType)
+              .input("id", sql.NVarChar, aggregateId)
+              .query(
+                "UPDATE dbo.benchAggregates SET state = JSON_MODIFY(state, '$.name', 'New Name'), updated_at = SYSUTCDATETIME() WHERE category = @category AND aggregate_id = @id"
+              );
+            await pool
+              .request()
+              .input("category", sql.NVarChar, aggregateType)
+              .input("id", sql.NVarChar, aggregateId)
+              .input(
+                "payload",
+                sql.NVarChar,
+                JSON.stringify({
+                  name: "New Name",
+                  at: new Date().toISOString(),
+                })
+              )
+              .query(
+                "INSERT INTO dbo.benchEvents (aggregate_id, category, event_type, payload, created_at) VALUES (@id, @category, 'Patched', @payload, SYSUTCDATETIME())"
+              );
+          },
+        ],
+      ];
+
+      const operations = filterBenchOperations(benchOperations);
+
+      logRunModeNotice(
+        t,
+        "MSSQL",
+        datasetIndex,
+        benchOperations.length,
+        operations.length
       );
 
       if (operations.length === 0) {
