@@ -283,7 +283,7 @@ test("benchmarks postgres operations", async (t) => {
           "list",
           () =>
             pool.query(
-              "SELECT aggregate_id FROM bench_aggregates WHERE category = $1 AND archived = FALSE ORDER BY aggregate_id ASC LIMIT $2::int",
+              "SELECT * FROM bench_aggregates WHERE category = $1 AND archived = FALSE ORDER BY aggregate_id ASC LIMIT $2::int",
               [aggregateType, pageSize]
             ),
         ],

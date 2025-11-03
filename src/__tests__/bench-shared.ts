@@ -10,8 +10,10 @@ export const listLimit = 100;
 export const eventsLimit = 100;
 export const projectionFields = ["state.field1", "state.field2"] as const;
 
+// @TODO Dataset sizes to benchmark against
+// Extend as needed for more comprehensive testing
 export const datasetSizes = [
-  10, 100, 1000, 10_000, 100_000, 1_000_000, 5_000_000,
+  10, 100, 1000, 10_000, 100_000, 1_000_000,
 ] as const;
 
 export const formatAggregateId = (index: number) =>
@@ -128,15 +130,21 @@ export const formatLatency = (value: number) => {
   if (!Number.isFinite(value)) {
     return "n/a";
   }
-  if (value >= 1_000_000) {
-    const ms = value / 1_000_000;
-    return `${ms.toFixed(precisionFor(ms))} ms`;
-  }
+
+  // Tinybench reports latency statistics in milliseconds.
   if (value >= 1_000) {
-    const micros = value / 1_000;
+    const seconds = value / 1_000;
+    return `${seconds.toFixed(precisionFor(seconds))} s`;
+  }
+  if (value >= 1) {
+    return `${value.toFixed(precisionFor(value))} ms`;
+  }
+  const micros = value * 1_000;
+  if (micros >= 1) {
     return `${micros.toFixed(precisionFor(micros))} µs`;
   }
-  return `${value.toFixed(precisionFor(value))} ns`;
+  const nanos = value * 1_000_000;
+  return `${nanos.toFixed(precisionFor(nanos))} ns`;
 };
 
 export const formatThroughput = (value: number) => {

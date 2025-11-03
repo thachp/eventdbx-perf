@@ -8,7 +8,6 @@ import {
   createBench,
   datasetSizes,
   eventsLimit,
-  formatAggregateId,
   formatDatasetLabel,
   listLimit,
   loadOptionalModule,
@@ -309,7 +308,7 @@ test("benchmarks mssql operations", async (t) => {
               .input("category", sql.NVarChar, aggregateType)
               .input("limit", sql.Int, pageSize)
               .query(
-                "SELECT TOP (@limit) aggregate_id FROM dbo.benchAggregates WHERE category = @category AND archived = 0 ORDER BY aggregate_id ASC"
+                "SELECT TOP (@limit) * FROM dbo.benchAggregates WHERE category = @category AND archived = 0 ORDER BY aggregate_id ASC"
               );
           },
         ],

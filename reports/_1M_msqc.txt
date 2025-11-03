@@ -1,0 +1,76 @@
+
+  ✔ benchmarks mssql operations (43.3s)
+    ℹ MSSQL dataset ready: test1 (10 records)
+    ℹ MSSQL test1 (10 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      list       208 ±4.99%          4.90 ms ±5.32% 
+      get        166 ±16.75%         7.17 ms ±20.52%
+      select     174 ±14.39%         6.55 ms ±18.51%
+      events     166 ±12.36%         6.57 ms ±13.07%
+      apply      189 ±5.11%          5.38 ms ±5.76% 
+      create     77.7 ±6.68%         13.0 ms ±6.94% 
+      archive    188 ±6.13%          5.49 ms ±7.92% 
+      restore    183 ±5.91%          5.58 ms ±6.43% 
+      patch      94.1 ±7.94%         10.9 ms ±9.41% 
+
+    ℹ MSSQL dataset ready: test2 (100 records)
+    ℹ MSSQL test2 (100 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      list       111 ±10.52%         9.48 ms ±14.30%
+      get        199 ±10.09%         5.43 ms ±11.63%
+      select     159 ±12.74%         6.97 ms ±16.72%
+      events     184 ±9.68%          5.88 ms ±14.01%
+      apply      164 ±7.37%          6.33 ms ±9.01% 
+      create     93.4 ±7.22%         10.9 ms ±7.72% 
+      archive    183 ±6.58%          5.64 ms ±8.48% 
+      restore    178 ±5.58%          5.72 ms ±6.04% 
+      patch      88.1 ±6.50%         11.5 ms ±6.55% 
+
+    ℹ MSSQL dataset ready: test3 (1,000 records)
+    ℹ MSSQL test3 (1,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      list       116 ±8.00%          8.85 ms ±8.48% 
+      get        236 ±7.84%          4.55 ms ±11.94%
+      select     111 ±74.51%         22.8 ms ±68.67%
+      events     149 ±16.49%         8.59 ms ±41.67%
+      apply      174 ±7.76%          5.99 ms ±8.46% 
+      create     83.0 ±7.16%         12.2 ms ±8.27% 
+      archive    194 ±5.57%          5.29 ms ±6.44% 
+      restore    150 ±6.97%          6.84 ms ±8.41% 
+      patch      95.1 ±8.49%         10.8 ms ±9.54% 
+
+    ℹ MSSQL dataset ready: test4 (10,000 records)
+    ℹ MSSQL test4 (10,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      list       138 ±6.51%          7.44 ms ±9.79% 
+      get        252 ±5.39%          4.10 ms ±7.42% 
+      select     175 ±8.32%          5.98 ms ±9.68% 
+      events     158 ±18.31%         8.50 ms ±47.11%
+      apply      143 ±7.68%          7.23 ms ±9.68% 
+      create     69.1 ±11.24%        14.8 ms ±10.99%
+      archive    152 ±6.32%          6.74 ms ±6.79% 
+      restore    207 ±4.97%          4.93 ms ±5.66% 
+      patch      90.5 ±7.37%         11.2 ms ±8.86% 
+
+    ℹ MSSQL dataset ready: test5 (100,000 records)
+    ℹ MSSQL test5 (100,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      list       109 ±9.12%          9.58 ms ±14.57%
+      get        227 ±5.08%          4.51 ms ±5.53% 
+      select     235 ±7.20%          4.48 ms ±9.27% 
+      events     218 ±5.68%          4.77 ms ±9.84% 
+      apply      185 ±5.49%          5.52 ms ±6.05% 
+      create     89.8 ±8.74%         11.4 ms ±10.09%
+      archive    176 ±6.24%          5.82 ms ±6.96% 
+      restore    195 ±3.71%          5.17 ms ±3.76% 
+      patch      85.9 ±5.79%         11.8 ms ±6.43% 
+
+    ℹ Skipping MSSQL benchmark – request timed out: Failed to cancel request in 5000ms
+  ─
+
+  1 test passed

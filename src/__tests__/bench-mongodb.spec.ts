@@ -207,11 +207,13 @@ test("benchmarks mongodb operations", async (t) => {
         .project({ aggregateId: 1, _id: 0 })
         .toArray();
       const aggregateIds = aggregateDocs
-        .map(
-          (doc: { aggregateId?: unknown }) =>
-            (typeof doc.aggregateId === "string" ? doc.aggregateId : undefined)
+        .map((doc: { aggregateId?: unknown }) =>
+          typeof doc.aggregateId === "string" ? doc.aggregateId : undefined
         )
-        .filter((value: string | undefined): value is string => typeof value === "string");
+        .filter(
+          (value: string | undefined): value is string =>
+            typeof value === "string"
+        );
       if (aggregateIds.length === 0) {
         throw new Error("MongoDB aggregates collection is empty");
       }

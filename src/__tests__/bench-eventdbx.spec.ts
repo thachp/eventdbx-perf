@@ -76,7 +76,7 @@ const ensureEventdbxDataset = async (
     const aggregateId = formatAggregateId(index);
     const now = new Date().toISOString();
     try {
-      await client.create(aggregateType, aggregateId, "created", {
+      const test = await client.create(aggregateType, aggregateId, "created", {
         payload: {
           name: `Account ${aggregateId}`,
           field1: `value-${aggregateId}`,
