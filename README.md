@@ -70,6 +70,14 @@ pnpm exec ava "dist/__tests__/bench-postgres.spec.js" --match="*apply*"
 While iterating, you can also use AVA’s watch mode (`pnpm exec ava --watch ...`)
 in combination with `pnpm exec tsc --watch` if you prefer continuous feedback.
 
+## EventDBX Test Token
+
+EventDBX automatically generates a token on first start; you can retrieve it by reading the cli.token file.
+
+```bash
+docker compose -f src/docker-compose.yml exec eventdbx sh -c 'cat /var/lib/eventdbx/.eventdbx/cli.token'
+```
+
 ## Environment configuration
 
 `bench-shared.ts` loads environment variables once via `dotenv/config`. A sample

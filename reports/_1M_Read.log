@@ -1,0 +1,171 @@
+
+> eventdbx-perf@ test /Users/thachp/repos/eventdbx-perf
+> npm run build && ava "dist/__tests__/**/*.spec.js"
+
+
+> build
+> tsc --project tsconfig.json
+
+
+  ✔ bench-eventdbx › benchmarks eventdbx control operations (2.7s)
+    ℹ EventDBX control dataset ready: test1 (1 records)
+    ℹ Skipping apply operation in mode "read" for EventDBX benchmark
+    ℹ Skipping create operation in mode "read" for EventDBX benchmark
+    ℹ Skipping archive operation in mode "read" for EventDBX benchmark
+    ℹ Skipping restore operation in mode "read" for EventDBX benchmark
+    ℹ Skipping patch operation in mode "read" for EventDBX benchmark
+    ℹ EventDBX test1:
+      operation  throughput (ops/s)  latency      
+      ---------  ------------------  -------------
+      list       1.15k ±3.09%        918 µs ±5.19%
+      get        1.31k ±2.87%        805 µs ±3.93%
+      select     1.33k ±2.07%        774 µs ±2.53%
+      events     1.11k ±3.33%        952 µs ±4.69%
+
+    ℹ EventDBX control dataset ready: test2 (100,000 records)
+    ℹ Skipping apply operation in mode "read" for EventDBX benchmark
+    ℹ Skipping create operation in mode "read" for EventDBX benchmark
+    ℹ Skipping archive operation in mode "read" for EventDBX benchmark
+    ℹ Skipping restore operation in mode "read" for EventDBX benchmark
+    ℹ Skipping patch operation in mode "read" for EventDBX benchmark
+    ℹ EventDBX test2:
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      list       276 ±5.35%          3.79 ms ±8.99% 
+      get        985 ±6.43%          1.25 ms ±10.98%
+      select     1.19k ±3.79%        937 µs ±8.46%  
+      events     1.14k ±4.26%        1.06 ms ±16.15%
+
+    ℹ EventDBX control dataset ready: test3 (1,000,000 records)
+    ℹ Skipping apply operation in mode "read" for EventDBX benchmark
+    ℹ Skipping create operation in mode "read" for EventDBX benchmark
+    ℹ Skipping archive operation in mode "read" for EventDBX benchmark
+    ℹ Skipping restore operation in mode "read" for EventDBX benchmark
+    ℹ Skipping patch operation in mode "read" for EventDBX benchmark
+    ℹ EventDBX test3:
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      list       325 ±4.78%          3.24 ms ±10.08%
+      get        1.77k ±3.35%        848 µs ±49.85% 
+      select     1.59k ±3.33%        716 µs ±8.94%  
+      events     1.50k ±3.69%        1.11 ms ±43.18%
+
+  ✔ bench-postgres › benchmarks postgres operations (31s)
+    ℹ Postgres dataset ready: test1 (1 records)
+    ℹ Skipping apply operation in mode "read" for Postgres benchmark
+    ℹ Skipping create operation in mode "read" for Postgres benchmark
+    ℹ Skipping archive operation in mode "read" for Postgres benchmark
+    ℹ Skipping restore operation in mode "read" for Postgres benchmark
+    ℹ Skipping patch operation in mode "read" for Postgres benchmark
+    ℹ Postgres test1 (1 records):
+      operation  throughput (ops/s)  latency      
+      ---------  ------------------  -------------
+      list       1.89k ±2.41%        566 µs ±4.44%
+      get        1.89k ±3.64%        616 µs ±7.82%
+      select     2.25k ±1.46%        457 µs ±2.63%
+      events     2.12k ±2.19%        505 µs ±4.82%
+
+    ℹ Postgres dataset ready: test2 (100,000 records)
+    ℹ Skipping apply operation in mode "read" for Postgres benchmark
+    ℹ Skipping create operation in mode "read" for Postgres benchmark
+    ℹ Skipping archive operation in mode "read" for Postgres benchmark
+    ℹ Skipping restore operation in mode "read" for Postgres benchmark
+    ℹ Skipping patch operation in mode "read" for Postgres benchmark
+    ℹ Postgres test2 (100,000 records):
+      operation  throughput (ops/s)  latency      
+      ---------  ------------------  -------------
+      list       1.18k ±3.04%        912 µs ±6.64%
+      get        2.11k ±2.59%        509 µs ±3.90%
+      select     2.46k ±1.87%        435 µs ±6.22%
+      events     2.22k ±1.89%        471 µs ±3.31%
+
+    ℹ Postgres dataset ready: test3 (1,000,000 records)
+    ℹ Skipping apply operation in mode "read" for Postgres benchmark
+    ℹ Skipping create operation in mode "read" for Postgres benchmark
+    ℹ Skipping archive operation in mode "read" for Postgres benchmark
+    ℹ Skipping restore operation in mode "read" for Postgres benchmark
+    ℹ Skipping patch operation in mode "read" for Postgres benchmark
+    ℹ Postgres test3 (1,000,000 records):
+      operation  throughput (ops/s)  latency      
+      ---------  ------------------  -------------
+      list       1.25k ±2.64%        856 µs ±6.31%
+      get        2.68k ±1.91%        397 µs ±4.17%
+      select     2.66k ±1.89%        399 µs ±3.74%
+      events     2.38k ±2.17%        451 µs ±4.32%
+
+  ✔ bench-mssql › benchmarks mssql operations (31.3s)
+    ℹ MSSQL dataset ready: test1 (1 records)
+    ℹ Skipping apply operation in mode "read" for MSSQL benchmark
+    ℹ Skipping create operation in mode "read" for MSSQL benchmark
+    ℹ Skipping archive operation in mode "read" for MSSQL benchmark
+    ℹ Skipping restore operation in mode "read" for MSSQL benchmark
+    ℹ Skipping patch operation in mode "read" for MSSQL benchmark
+    ℹ MSSQL test1 (1 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      list       162 ±8.06%          6.54 ms ±12.80%
+      get        162 ±9.29%          6.53 ms ±11.32%
+      select     183 ±6.48%          5.65 ms ±8.86% 
+      events     176 ±9.37%          6.28 ms ±19.54%
+
+    ℹ MSSQL dataset ready: test2 (100,000 records)
+    ℹ Skipping apply operation in mode "read" for MSSQL benchmark
+    ℹ Skipping create operation in mode "read" for MSSQL benchmark
+    ℹ Skipping archive operation in mode "read" for MSSQL benchmark
+    ℹ Skipping restore operation in mode "read" for MSSQL benchmark
+    ℹ Skipping patch operation in mode "read" for MSSQL benchmark
+    ℹ MSSQL test2 (100,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      list       129 ±5.60%          7.93 ms ±8.41% 
+      get        223 ±4.77%          4.58 ms ±6.16% 
+      select     174 ±8.37%          6.01 ms ±9.52% 
+      events     224 ±6.34%          4.70 ms ±10.65%
+
+    ℹ Skipping MSSQL benchmark – request timed out: Timeout: Request failed to complete in 15000ms
+  ✔ bench-mongodb › benchmarks mongodb operations (50.7s)
+    ℹ MongoDB dataset ready: test1 (1 records)
+    ℹ Skipping apply operation in mode "read" for MongoDB benchmark
+    ℹ Skipping create operation in mode "read" for MongoDB benchmark
+    ℹ Skipping archive operation in mode "read" for MongoDB benchmark
+    ℹ Skipping restore operation in mode "read" for MongoDB benchmark
+    ℹ Skipping patch operation in mode "read" for MongoDB benchmark
+    ℹ MongoDB test1 (1 records):
+      operation  throughput (ops/s)  latency       
+      ---------  ------------------  --------------
+      list       947 ±2.42%          1.09 ms ±3.43%
+      get        872 ±3.66%          1.22 ms ±5.74%
+      select     998 ±2.55%          1.04 ms ±4.48%
+      events     958 ±2.94%          1.10 ms ±5.09%
+
+    ℹ MongoDB dataset ready: test2 (100,000 records)
+    ℹ Skipping apply operation in mode "read" for MongoDB benchmark
+    ℹ Skipping create operation in mode "read" for MongoDB benchmark
+    ℹ Skipping archive operation in mode "read" for MongoDB benchmark
+    ℹ Skipping restore operation in mode "read" for MongoDB benchmark
+    ℹ Skipping patch operation in mode "read" for MongoDB benchmark
+    ℹ MongoDB test2 (100,000 records):
+      operation  throughput (ops/s)  latency       
+      ---------  ------------------  --------------
+      list       711 ±3.16%          1.49 ms ±7.40%
+      get        908 ±2.33%          1.14 ms ±5.27%
+      select     864 ±3.20%          1.24 ms ±8.49%
+      events     766 ±2.37%          1.33 ms ±2.81%
+
+    ℹ MongoDB dataset ready: test3 (1,000,000 records)
+    ℹ Skipping apply operation in mode "read" for MongoDB benchmark
+    ℹ Skipping create operation in mode "read" for MongoDB benchmark
+    ℹ Skipping archive operation in mode "read" for MongoDB benchmark
+    ℹ Skipping restore operation in mode "read" for MongoDB benchmark
+    ℹ Skipping patch operation in mode "read" for MongoDB benchmark
+    ℹ MongoDB test3 (1,000,000 records):
+      operation  throughput (ops/s)  latency       
+      ---------  ------------------  --------------
+      list       596 ±4.54%          1.81 ms ±9.25%
+      get        832 ±4.48%          1.32 ms ±8.35%
+      select     552 ±6.42%          1.97 ms ±6.98%
+      events     830 ±3.85%          1.29 ms ±8.39%
+
+  ─
+
+  4 tests passed

@@ -12,9 +12,7 @@ export const projectionFields = ["state.field1", "state.field2"] as const;
 
 // @TODO Dataset sizes to benchmark against
 // Extend as needed for more comprehensive testing
-export const datasetSizes = [
-  10, 100, 1000, 10_000, 100_000, 1_000_000,
-] as const;
+export const datasetSizes = [1, 10_000, 100_000] as const;
 
 export const formatAggregateId = (index: number) =>
   String(index).padStart(16, "0");
@@ -43,6 +41,88 @@ export const operationDetails: Record<string, string> = {
 
 export const formatDatasetLabel = (count: number) =>
   `${count.toLocaleString()} records`;
+
+export type BenchRunMode = "all" | "read" | "write";
+
+const normalizeRunMode = (
+  value: string | undefined
+): BenchRunMode | undefined => {
+  if (!value) {
+    return undefined;
+  }
+  const normalized = value.trim().toLowerCase();
+  if (
+    normalized === "all" ||
+    normalized === "both" ||
+    normalized === "default"
+  ) {
+    return "all";
+  }
+  if (
+    normalized === "read" ||
+    normalized === "read-only" ||
+    normalized === "readonly"
+  ) {
+    return "read";
+  }
+  if (
+    normalized === "write" ||
+    normalized === "write-only" ||
+    normalized === "writeonly"
+  ) {
+    return "write";
+  }
+  return undefined;
+};
+
+export const benchRunMode: BenchRunMode =
+  normalizeRunMode(process.env.BENCH_RUN_MODE) ??
+  normalizeRunMode(process.env.BENCH_MODE) ??
+  "all";
+
+const readOperationLabels = new Set(["list", "get", "select", "events"]);
+const writeOperationLabels = new Set([
+  "apply",
+  "create",
+  "archive",
+  "restore",
+  "patch",
+]);
+
+export const isReadOperation = (label: string) =>
+  readOperationLabels.has(label);
+export const isWriteOperation = (label: string) =>
+  writeOperationLabels.has(label);
+
+export const isOperationEnabled = (label: string) => {
+  switch (benchRunMode) {
+    case "read":
+      return isReadOperation(label);
+    case "write":
+      return isWriteOperation(label);
+    default:
+      return true;
+  }
+};
+
+type FilterOptions = {
+  onSkip?: (label: string) => void;
+};
+
+export const filterBenchOperations = <T>(
+  operations: Array<[string, T]>,
+  options?: FilterOptions
+) => {
+  const enabled: Array<[string, T]> = [];
+  for (const [label, action] of operations) {
+    if (isOperationEnabled(label)) {
+      enabled.push([label, action]);
+    } else {
+      options?.onSkip?.(label);
+    }
+  }
+  return enabled;
+};
 
 export const logDatasetPreparation = (
   t: ExecutionContext,

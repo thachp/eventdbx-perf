@@ -1,0 +1,171 @@
+
+> eventdbx-perf@ test /Users/thachp/repos/eventdbx-perf
+> npm run build && ava "dist/__tests__/**/*.spec.js"
+
+
+> build
+> tsc --project tsconfig.json
+
+
+  ✔ bench-postgres › benchmarks postgres operations (26.9s)
+    ℹ Postgres dataset ready: test1 (1 records)
+    ℹ Skipping list operation in mode "write" for Postgres benchmark
+    ℹ Skipping get operation in mode "write" for Postgres benchmark
+    ℹ Skipping select operation in mode "write" for Postgres benchmark
+    ℹ Skipping events operation in mode "write" for Postgres benchmark
+    ℹ Postgres test1 (1 records):
+      operation  throughput (ops/s)  latency       
+      ---------  ------------------  --------------
+      apply      1.89k ±1.79%        546 µs ±3.00% 
+      create     1.01k ±2.38%        1.02 ms ±4.23%
+      archive    1.04k ±2.38%        991 µs ±3.22% 
+      restore    1.08k ±2.32%        958 µs ±3.93% 
+      patch      1.10k ±2.39%        939 µs ±3.85% 
+
+    ℹ Postgres dataset ready: test2 (100,000 records)
+    ℹ Skipping list operation in mode "write" for Postgres benchmark
+    ℹ Skipping get operation in mode "write" for Postgres benchmark
+    ℹ Skipping select operation in mode "write" for Postgres benchmark
+    ℹ Skipping events operation in mode "write" for Postgres benchmark
+    ℹ Postgres test2 (100,000 records):
+      operation  throughput (ops/s)  latency       
+      ---------  ------------------  --------------
+      apply      2.13k ±2.14%        499 µs ±4.41% 
+      create     955 ±3.98%          1.15 ms ±8.52%
+      archive    1.08k ±2.60%        960 µs ±3.38% 
+      restore    1.07k ±2.67%        970 µs ±3.76% 
+      patch      981 ±3.64%          1.09 ms ±5.47%
+
+    ℹ Postgres dataset ready: test3 (1,000,000 records)
+    ℹ Skipping list operation in mode "write" for Postgres benchmark
+    ℹ Skipping get operation in mode "write" for Postgres benchmark
+    ℹ Skipping select operation in mode "write" for Postgres benchmark
+    ℹ Skipping events operation in mode "write" for Postgres benchmark
+    ℹ Postgres test3 (1,000,000 records):
+      operation  throughput (ops/s)  latency      
+      ---------  ------------------  -------------
+      apply      2.13k ±1.99%        494 µs ±3.79%
+      create     1.12k ±2.35%        959 µs ±9.81%
+      archive    1.11k ±2.10%        927 µs ±3.44%
+      restore    1.11k ±2.02%        928 µs ±3.44%
+      patch      1.10k ±2.39%        932 µs ±3.19%
+
+  ✔ bench-mssql › benchmarks mssql operations (38.9s)
+    ℹ MSSQL dataset ready: test1 (1 records)
+    ℹ Skipping list operation in mode "write" for MSSQL benchmark
+    ℹ Skipping get operation in mode "write" for MSSQL benchmark
+    ℹ Skipping select operation in mode "write" for MSSQL benchmark
+    ℹ Skipping events operation in mode "write" for MSSQL benchmark
+    ℹ MSSQL test1 (1 records):
+      operation  throughput (ops/s)  latency       
+      ---------  ------------------  --------------
+      apply      195 ±2.65%          5.15 ms ±3.08%
+      create     96.5 ±6.09%         10.5 ms ±7.56%
+      archive    103 ±2.54%          9.72 ms ±2.82%
+      restore    96.6 ±6.18%         10.5 ms ±7.98%
+      patch      94.1 ±3.43%         10.7 ms ±3.71%
+
+    ℹ MSSQL dataset ready: test2 (100,000 records)
+    ℹ Skipping list operation in mode "write" for MSSQL benchmark
+    ℹ Skipping get operation in mode "write" for MSSQL benchmark
+    ℹ Skipping select operation in mode "write" for MSSQL benchmark
+    ℹ Skipping events operation in mode "write" for MSSQL benchmark
+    ℹ MSSQL test2 (100,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      169 ±6.80%          6.15 ms ±9.65% 
+      create     90.4 ±6.69%         11.2 ms ±7.92% 
+      archive    92.6 ±7.33%         11.0 ms ±8.91% 
+      restore    92.9 ±6.50%         10.9 ms ±6.74% 
+      patch      90.9 ±8.87%         11.3 ms ±10.94%
+
+    ℹ Skipping MSSQL benchmark – request timed out: Timeout: Request failed to complete in 15000ms
+  ✔ bench-mongodb › benchmarks mongodb operations (39s)
+    ℹ MongoDB dataset ready: test1 (1 records)
+    ℹ Skipping list operation in mode "write" for MongoDB benchmark
+    ℹ Skipping get operation in mode "write" for MongoDB benchmark
+    ℹ Skipping select operation in mode "write" for MongoDB benchmark
+    ℹ Skipping events operation in mode "write" for MongoDB benchmark
+    ℹ MongoDB test1 (1 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      764 ±3.01%          1.35 ms ±4.17% 
+      create     386 ±6.98%          2.88 ms ±12.37%
+      archive    404 ±6.67%          2.89 ms ±18.89%
+      restore    387 ±6.39%          2.89 ms ±14.03%
+      patch      443 ±5.19%          2.44 ms ±9.90% 
+
+    ℹ MongoDB dataset ready: test2 (100,000 records)
+    ℹ Skipping list operation in mode "write" for MongoDB benchmark
+    ℹ Skipping get operation in mode "write" for MongoDB benchmark
+    ℹ Skipping select operation in mode "write" for MongoDB benchmark
+    ℹ Skipping events operation in mode "write" for MongoDB benchmark
+    ℹ MongoDB test2 (100,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      1.02k ±1.83%        999 µs ±3.37%  
+      create     514 ±3.07%          2.05 ms ±10.53%
+      archive    453 ±2.57%          2.24 ms ±3.19% 
+      restore    450 ±3.68%          2.34 ms ±10.38%
+      patch      445 ±5.49%          2.39 ms ±7.34% 
+
+    ℹ MongoDB dataset ready: test3 (1,000,000 records)
+    ℹ Skipping list operation in mode "write" for MongoDB benchmark
+    ℹ Skipping get operation in mode "write" for MongoDB benchmark
+    ℹ Skipping select operation in mode "write" for MongoDB benchmark
+    ℹ Skipping events operation in mode "write" for MongoDB benchmark
+    ℹ MongoDB test3 (1,000,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      1.28k ±1.75%        799 µs ±3.25%  
+      create     615 ±3.10%          1.71 ms ±9.13% 
+      archive    587 ±3.47%          1.81 ms ±9.53% 
+      restore    547 ±3.55%          1.94 ms ±10.15%
+      patch      511 ±3.48%          2.01 ms ±4.09% 
+
+  ✔ bench-eventdbx › benchmarks eventdbx control operations (12m 8.8s)
+    ℹ EventDBX control dataset ready: test1 (1 records)
+    ℹ Skipping list operation in mode "write" for EventDBX benchmark
+    ℹ Skipping get operation in mode "write" for EventDBX benchmark
+    ℹ Skipping select operation in mode "write" for EventDBX benchmark
+    ℹ Skipping events operation in mode "write" for EventDBX benchmark
+    ℹ EventDBX test1:
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      1.48k ±4.82%        1.16 ms ±47.42%
+      create     1.70k ±3.29%        689 µs ±12.99% 
+      archive    1.32k ±2.93%        817 µs ±6.15%  
+      restore    1.24k ±2.30%        847 µs ±5.57%  
+      patch      1.88k ±1.46%        541 µs ±1.75%  
+
+    ℹ EventDBX control dataset ready: test2 (100,000 records)
+    ℹ Skipping list operation in mode "write" for EventDBX benchmark
+    ℹ Skipping get operation in mode "write" for EventDBX benchmark
+    ℹ Skipping select operation in mode "write" for EventDBX benchmark
+    ℹ Skipping events operation in mode "write" for EventDBX benchmark
+    ℹ EventDBX test2:
+      operation  throughput (ops/s)  latency      
+      ---------  ------------------  -------------
+      apply      1.95k ±1.66%        528 µs ±2.60%
+      create     1.97k ±1.84%        527 µs ±2.92%
+      archive    1.53k ±3.00%        735 µs ±8.98%
+      restore    1.63k ±2.53%        648 µs ±3.84%
+      patch      2.33k ±1.30%        435 µs ±1.37%
+
+    ℹ EventDBX control dataset ready: test3 (1,000,000 records)
+    ℹ Skipping list operation in mode "write" for EventDBX benchmark
+    ℹ Skipping get operation in mode "write" for EventDBX benchmark
+    ℹ Skipping select operation in mode "write" for EventDBX benchmark
+    ℹ Skipping events operation in mode "write" for EventDBX benchmark
+    ℹ EventDBX test3:
+      operation  throughput (ops/s)  latency      
+      ---------  ------------------  -------------
+      apply      1.91k ±1.53%        533 µs ±1.74%
+      create     2.18k ±1.14%        479 µs ±7.01%
+      archive    1.72k ±1.43%        595 µs ±2.59%
+      restore    1.58k ±1.70%        645 µs ±1.91%
+      patch      1.74k ±3.60%        665 µs ±7.23%
+
+  ─
+
+  4 tests passed

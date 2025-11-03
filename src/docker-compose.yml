@@ -1,15 +1,19 @@
+name: eventdbx-perf
+
 x-resource-limits: &resource_limits
-  mem_limit: ${BENCH_MEMORY_LIMIT:-4g}
+  mem_limit: ${BENCH_MEMORY_LIMIT:-16g}
   cpus: ${BENCH_CPU_LIMIT:-4}
 
 x-tmpfs-options: &tmpfs_defaults
-  o: "rw,size=${BENCH_TMPFS_SIZE:-1073741824}"
+  o: "rw,size=${BENCH_TMPFS_SIZE:-12884901888}"
 
 services:
   eventdbx:
-    image: thachp/eventdbx:latest
+    image: thachp/eventdbx:v3.9.13
     volumes:
       - eventdbx-data:/var/lib/eventdbx
+    ports:
+      - ${EVENTDBX_PORT:-6363}:6363
     <<: *resource_limits
 
   postgres:
@@ -24,7 +28,9 @@ services:
       timeout: 3s
       retries: 10
     tmpfs:
-      - /var/lib/postgresql/data:rw,size=${BENCH_TMPFS_SIZE:-1073741824}
+      - /var/lib/postgresql/data:rw,size=${BENCH_POSTGRES_TMPFS_SIZE:-12884901888}
+    ports:
+      - ${POSTGRES_PORT:-5432}:5432
     <<: *resource_limits
 
   mongodb:
@@ -49,15 +55,20 @@ services:
       timeout: 3s
       retries: 12
     tmpfs:
-      - /data/db:rw,size=${BENCH_TMPFS_SIZE:-1073741824}
+      - /data/db:rw,size=${BENCH_MONGO_TMPFS_SIZE:-12884901888}
+    ports:
+      - ${MONGODB_PORT:-27017}:27017
     <<: *resource_limits
 
   mssql:
+    <<: *resource_limits
+    mem_limit: ${BENCH_MSSQL_MEM_LIMIT:-12884901888}
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: ${BENCH_MSSQL_SA_PASSWORD:YourStrongPassword!}
+      MSSQL_SA_PASSWORD: ${BENCH_MSSQL_SA_PASSWORD:-YourStrongPassword!}
       MSSQL_PID: ${BENCH_MSSQL_PID:-Developer}
+      MSSQL_MEMORY_LIMIT_MB: ${BENCH_MSSQL_MEMORY_LIMIT_MB:-24576}
     healthcheck:
       test:
         - CMD-SHELL
@@ -65,9 +76,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
-    tmpfs:
-      - /var/opt/mssql:rw,size=${BENCH_TMPFS_SIZE:-1073741824}
-    <<: *resource_limits
+    volumes:
+      - mssql-data:/var/opt/mssql
+    ports:
+      - ${MSSQL_PORT:-1433}:1433
 
 volumes:
   eventdbx-data:
@@ -75,4 +87,10 @@ volumes:
     driver_opts:
       type: tmpfs
       device: tmpfs
-      o: "rw,size=${BENCH_TMPFS_SIZE:-1073741824}"
+      o: "rw,size=${BENCH_TMPFS_SIZE:-12884901888}"
+  mssql-data:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: "rw,uid=10001,gid=0,mode=0770,size=${BENCH_MSSQL_TMPFS_SIZE:-12884901888}"

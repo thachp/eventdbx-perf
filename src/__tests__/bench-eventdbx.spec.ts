@@ -3,6 +3,8 @@ import type { AsyncOperation } from "./bench-shared.js";
 import {
   addBenchTask,
   aggregateType,
+  benchRunMode,
+  filterBenchOperations,
   createBench,
   datasetSizes,
   eventsLimit,
@@ -137,71 +139,89 @@ test("benchmarks eventdbx control operations", async (t) => {
         return aggregateId;
       };
 
-      const operations: Array<[string, AsyncOperation]> = [
-        ["list", () => client.list(aggregateType, { take: pageSize, skip: 0 })],
-        ["get", () => client.get(aggregateType, pickAggregateId())],
+      const operations: Array<[string, AsyncOperation]> = filterBenchOperations(
         [
-          "select",
-          () =>
-            client.select(
-              aggregateType,
-              pickAggregateId(),
-              Array.from(projectionFields)
+          [
+            "list",
+            () => client.list(aggregateType, { take: pageSize, skip: 0 }),
+          ],
+          ["get", () => client.get(aggregateType, pickAggregateId())],
+          [
+            "select",
+            () =>
+              client.select(
+                aggregateType,
+                pickAggregateId(),
+                Array.from(projectionFields)
+              ),
+          ],
+          [
+            "events",
+            () =>
+              client.events(aggregateType, pickAggregateId(), {
+                skip: 0,
+                take: eventWindow,
+              }),
+          ],
+          [
+            "apply",
+            () =>
+              client.apply(aggregateType, pickAggregateId(), "BenchApplied", {
+                payload: { marker: "apply", at: new Date().toISOString() },
+              }),
+          ],
+          [
+            "create",
+            () =>
+              client.create(aggregateType, `bench-${randomUUID()}`, "Created", {
+                payload: {
+                  name: "Benchmark Account",
+                  createdAt: new Date().toISOString(),
+                  field1: "value-bench",
+                  field2: 0,
+                },
+              }),
+          ],
+          [
+            "archive",
+            () =>
+              client.archive(aggregateType, pickAggregateId(), {
+                comment: "benchmark archive",
+              }),
+          ],
+          [
+            "restore",
+            () =>
+              client.restore(aggregateType, pickAggregateId(), {
+                comment: "benchmark restore",
+              }),
+          ],
+          [
+            "patch",
+            () =>
+              client.patch(
+                aggregateType,
+                pickAggregateId(),
+                "Patched",
+                [{ op: "replace", path: "/name", value: "New Name" }],
+                { note: "benchmark patch" }
+              ),
+          ],
+        ],
+        {
+          onSkip: (label) =>
+            t.log(
+              `Skipping ${label} operation in mode "${benchRunMode}" for EventDBX benchmark`
             ),
-        ],
-        [
-          "events",
-          () =>
-            client.events(aggregateType, pickAggregateId(), {
-              skip: 0,
-              take: eventWindow,
-            }),
-        ],
-        [
-          "apply",
-          () =>
-            client.apply(aggregateType, pickAggregateId(), "BenchApplied", {
-              payload: { marker: "apply", at: new Date().toISOString() },
-            }),
-        ],
-        [
-          "create",
-          () =>
-            client.create(aggregateType, `bench-${randomUUID()}`, "Created", {
-              payload: {
-                name: "Benchmark Account",
-                createdAt: new Date().toISOString(),
-                field1: "value-bench",
-                field2: 0,
-              },
-            }),
-        ],
-        [
-          "archive",
-          () =>
-            client.archive(aggregateType, pickAggregateId(), {
-              comment: "benchmark archive",
-            }),
-        ],
-        [
-          "restore",
-          () =>
-            client.restore(aggregateType, pickAggregateId(), {
-              comment: "benchmark restore",
-            }),
-        ],
-        [
-          "patch",
-          () =>
-            client.patch(
-              aggregateType,
-              pickAggregateId(),
-              "Patched",
-              [{ op: "replace", path: "/name", value: "New Name" }],
-              { note: "benchmark patch" }
-            ),
-        ],
-      ];
+        }
+      );
+
+      if (operations.length === 0) {
+        t.log(
+          `No operations enabled for EventDBX dataset ${datasetLabel} with run mode "${benchRunMode}". Skipping.`
+        );
+        continue;
+      }
 
       for (const [label, action] of operations) {
         addBenchTask(bench, label, () => runOperation(label, action));
