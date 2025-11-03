@@ -115,6 +115,9 @@ feel free to copy/modify it for your environment.
 | `EVENTDBX_TEST_IP`                    | `127.0.0.1`                                                                   | EventDBX control client host.                |
 | `EVENTDBX_TEST_PORT`                  | `6363`                                                                        | EventDBX control client port.                |
 | `EVENTDBX_TEST_TOKEN`                 | _static JWT in repo_                                                          | Authentication token for the control client. |
+| `BENCH_RUN_MODE` / `BENCH_MODE`       | `all`                                                                         | Operation mix (`all`, `read`, `write`).      |
+| `BENCH_OPERATION_LIMIT`               | `100`                                                                         | Shared page/event window size.               |
+| `BENCH_DATASET_SIZES`                 | `1,10000,100000`                                                              | Comma/space-separated dataset sizes.         |
 
 To spin up local dependencies quickly, use the provided compose file (passwords
 match the defaults above):
@@ -133,6 +136,10 @@ Remember to tear the stack down afterwards (`docker compose down`).
 - **`Cannot find module 'pg'` (or similar)**: optional drivers are loaded at
   runtime. Install the relevant package (`npm install pg`, `npm install mssql`,
   etc.) or unset the corresponding environment variables to skip that backend.
+- **AVA/npm operation timeouts**: if long-running suites exceed the default
+  timeout, re-run with a larger budget (for example
+  `AVA_TIMEOUT=10m pnpm test --timeout=10m`) so AVA’s watchdog doesn’t abort the
+  process mid-run.
 - **Postgres progress parser warnings about casts**: aggregate IDs are seeded as
   zero-padded strings and queries order lexicographically. If you still see
   warnings, ensure you are running the updated suite (no explicit casts remain).

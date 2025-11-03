@@ -6,13 +6,51 @@ type ExecutionContext = import("ava").ExecutionContext;
 type BenchInstance = Bench;
 
 export const aggregateType = "account";
-export const listLimit = 100;
-export const eventsLimit = 100;
+const parsePositiveInt = (
+  value: string | undefined,
+  fallback: number
+): number => {
+  if (!value) {
+    return fallback;
+  }
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const defaultOperationLimit = 100;
+const sharedOperationLimit = parsePositiveInt(
+  process.env.BENCH_OPERATION_LIMIT,
+  defaultOperationLimit
+);
+
+export const listLimit = sharedOperationLimit;
+export const eventsLimit = sharedOperationLimit;
 export const projectionFields = ["state.field1", "state.field2"] as const;
 
-// @TODO Dataset sizes to benchmark against
-// Extend as needed for more comprehensive testing
-export const datasetSizes = [1, 10_000, 100_000] as const;
+const parseDatasetSizes = (value: string | undefined) => {
+  if (!value) {
+    return undefined;
+  }
+  const parts = value
+    .split(/[, ]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const parsed = parts
+    .map((part) => {
+      if (/^\d+$/.test(part)) {
+        return Number.parseInt(part, 10);
+      }
+      return Number.NaN;
+    })
+    .filter((num) => Number.isFinite(num) && num > 0);
+  return parsed.length > 0 ? parsed : undefined;
+};
+
+const defaultDatasetSizes = [1, 10_000, 100_000] as const;
+export const datasetSizes =
+  parseDatasetSizes(process.env.BENCH_DATASET_SIZES)?.map((size) =>
+    Math.max(1, Math.trunc(size))
+  ) ?? defaultDatasetSizes;
 
 export const formatAggregateId = (index: number) =>
   String(index).padStart(16, "0");
