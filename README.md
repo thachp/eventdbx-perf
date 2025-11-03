@@ -70,6 +70,26 @@ pnpm exec ava "dist/__tests__/bench-postgres.spec.js" --match="*apply*"
 While iterating, you can also use AVA’s watch mode (`pnpm exec ava --watch ...`)
 in combination with `pnpm exec tsc --watch` if you prefer continuous feedback.
 
+### Controlling the operation mix
+
+Benchmarks execute a shared set of read and write operations by default. You can
+toggle the workload with the `BENCH_RUN_MODE` environment variable (alias:
+`BENCH_MODE`). Set it inline, or add it to your project’s `.env` file (the harness
+loads `.env` automatically):
+
+```bash
+# Only measure write-heavy tasks (apply/create/archive/restore/patch)
+BENCH_RUN_MODE=write-only pnpm test
+
+# Focus on read paths (list/get/select/events)
+BENCH_RUN_MODE=read-only pnpm exec ava "dist/__tests__/bench-mongodb.spec.js"
+```
+
+Accepted values are `all` (default), `read` / `read-only`, and `write` /
+`write-only`. When a mode excludes an operation, the suite logs a skip message
+instead of running the task, so summaries only include the operations that match
+the selected workload.
+
 ## EventDBX Test Token
 
 EventDBX automatically generates a token on first start; you can retrieve it by reading the cli.token file.
