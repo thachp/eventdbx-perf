@@ -1,0 +1,100 @@
+
+> eventdbx-perf@ test /Users/thachp/repos/eventdbx-perf
+> npm run build && ava "dist/__tests__/**/*.spec.js"
+
+
+> build
+> tsc --project tsconfig.json
+
+
+  ✔ bench-eventdbx › benchmarks eventdbx control operations (2s)
+    ℹ EventDBX control dataset ready: test1 (1 records)
+    ℹ EventDBX benchmark running in write-only mode; read operations are disabled.
+    ℹ EventDBX test1:
+      operation  throughput (ops/s)  latency      
+      ---------  ------------------  -------------
+      apply      1.79k ±2.34%        604 µs ±6.10%
+      create     2.01k ±2.39%        530 µs ±4.83%
+      archive    1.38k ±2.30%        760 µs ±4.93%
+      restore    1.31k ±2.92%        827 µs ±6.70%
+      patch      1.84k ±1.39%        551 µs ±1.43%
+
+    ℹ EventDBX control dataset ready: test2 (10,000 records)
+    ℹ EventDBX test2:
+      operation  throughput (ops/s)  latency      
+      ---------  ------------------  -------------
+      apply      1.93k ±1.63%        528 µs ±1.79%
+      create     1.85k ±2.03%        571 µs ±5.37%
+      archive    1.36k ±1.71%        747 µs ±1.78%
+      restore    1.32k ±3.35%        825 µs ±5.61%
+      patch      1.75k ±3.34%        657 µs ±8.45%
+
+  ✔ bench-postgres › benchmarks postgres operations (2.6s)
+    ℹ Postgres dataset ready: test1 (1 records)
+    ℹ Postgres benchmark running in write-only mode; read operations are disabled.
+    ℹ Postgres test1 (1 records):
+      operation  throughput (ops/s)  latency       
+      ---------  ------------------  --------------
+      apply      1.88k ±2.53%        579 µs ±6.68% 
+      create     991 ±2.65%          1.04 ms ±3.30%
+      archive    879 ±3.54%          1.22 ms ±7.21%
+      restore    971 ±1.70%          1.05 ms ±2.72%
+      patch      975 ±2.41%          1.06 ms ±3.95%
+
+    ℹ Postgres dataset ready: test2 (10,000 records)
+    ℹ Postgres test2 (10,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      1.70k ±4.02%        696 µs ±9.21%  
+      create     1.01k ±3.20%        1.05 ms ±5.38% 
+      archive    974 ±4.45%          1.31 ms ±25.85%
+      restore    1.09k ±2.28%        934 µs ±2.29%  
+      patch      1.24k ±2.06%        835 µs ±3.89%  
+
+  ✔ bench-mongodb › benchmarks mongodb operations (3.2s)
+    ℹ MongoDB dataset ready: test1 (1 records)
+    ℹ MongoDB benchmark running in write-only mode; read operations are disabled.
+    ℹ MongoDB test1 (1 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      894 ±2.01%          1.14 ms ±3.69% 
+      create     473 ±4.06%          2.25 ms ±11.19%
+      archive    444 ±3.41%          2.39 ms ±12.18%
+      restore    464 ±1.97%          2.17 ms ±2.77% 
+      patch      451 ±3.25%          2.34 ms ±10.91%
+
+    ℹ MongoDB dataset ready: test2 (10,000 records)
+    ℹ MongoDB test2 (10,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      1.16k ±2.20%        916 µs ±8.99%  
+      create     536 ±4.80%          2.02 ms ±11.03%
+      archive    568 ±2.69%          1.79 ms ±3.10% 
+      restore    598 ±3.17%          1.76 ms ±8.57% 
+      patch      550 ±3.80%          1.93 ms ±10.28%
+
+  ✔ bench-mssql › benchmarks mssql operations (4.3s)
+    ℹ MSSQL dataset ready: test1 (1 records)
+    ℹ MSSQL benchmark running in write-only mode; read operations are disabled.
+    ℹ MSSQL test1 (1 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      201 ±2.68%          5.00 ms ±3.24% 
+      create     97.6 ±6.31%         10.4 ms ±7.75% 
+      archive    87.8 ±11.32%        11.9 ms ±15.37%
+      restore    89.7 ±16.63%        13.1 ms ±41.28%
+      patch      102 ±4.92%          9.92 ms ±5.73% 
+
+    ℹ MSSQL dataset ready: test2 (10,000 records)
+    ℹ MSSQL test2 (10,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      253 ±2.66%          3.98 ms ±2.91% 
+      create     113 ±8.90%          9.15 ms ±9.67% 
+      archive    85.6 ±10.80%        12.1 ms ±11.28%
+      restore    84.6 ±13.49%        12.3 ms ±11.85%
+      patch      88.6 ±12.01%        11.7 ms ±12.81%
+
+  ─
+
+  4 tests passed

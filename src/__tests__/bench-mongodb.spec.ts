@@ -14,6 +14,7 @@ import {
   listLimit,
   loadOptionalModule,
   logDatasetPreparation,
+  logRunModeNotice,
   projectionFields,
   summarizeBench,
   toErrorMessage,
@@ -226,105 +227,103 @@ test("benchmarks mongodb operations", async (t) => {
         return aggregateId;
       };
 
-      const operations: Array<[string, () => Promise<unknown>]> =
-        filterBenchOperations(
-          [
-            [
-              "list",
-              () =>
-                aggregatesCollection
-                  .find({ category: aggregateType, archived: { $ne: true } })
-                  .sort({ index: 1 })
-                  .limit(pageSize)
-                  .project({ aggregateId: 1 })
-                  .toArray(),
-            ],
-            [
-              "get",
-              async () => {
-                const aggregateId = pickAggregateId();
-                await aggregatesCollection.findOne({
-                  aggregateId,
-                  category: aggregateType,
-                });
+      const benchOperations: Array<[string, () => Promise<unknown>]> = [
+        [
+          "list",
+          () =>
+            aggregatesCollection
+              .find({ category: aggregateType, archived: { $ne: true } })
+              .sort({ index: 1 })
+              .limit(pageSize)
+              .project({ aggregateId: 1 })
+              .toArray(),
+        ],
+        [
+          "get",
+          async () => {
+            const aggregateId = pickAggregateId();
+            await aggregatesCollection.findOne({
+              aggregateId,
+              category: aggregateType,
+            });
+          },
+        ],
+        [
+          "select",
+          async () => {
+            const aggregateId = pickAggregateId();
+            await aggregatesCollection.findOne(
+              { aggregateId, category: aggregateType },
+              {
+                projection: {
+                  [projectionFields[0]]: 1,
+                  [projectionFields[1]]: 1,
+                  _id: 0,
+                },
+              }
+            );
+          },
+        ],
+        [
+          "events",
+          async () => {
+            const aggregateId = pickAggregateId();
+            await eventsCollection
+              .find({ aggregateId, category: aggregateType })
+              .sort({ createdAt: 1 })
+              .limit(eventsLimit)
+              .toArray();
+          },
+        ],
+        [
+          "apply",
+          async () => {
+            const aggregateId = pickAggregateId();
+            await eventsCollection.insertOne({
+              aggregateId,
+              category: aggregateType,
+              eventType: "BenchApplied",
+              payload: { marker: "apply", at: new Date() },
+              benchRun: true,
+              createdAt: new Date(),
+            });
+          },
+        ],
+        [
+          "create",
+          async () => {
+            const aggregateId = `bench-${randomUUID()}`;
+            const now = new Date();
+            await aggregatesCollection.insertOne({
+              _id: aggregateId,
+              aggregateId,
+              category: aggregateType,
+              state: {
+                field1: "value-bench",
+                field2: 0,
+                name: "Benchmark Account",
+                createdAt: now.toISOString(),
+                archived: false,
               },
-            ],
-            [
-              "select",
-              async () => {
-                const aggregateId = pickAggregateId();
-                await aggregatesCollection.findOne(
-                  { aggregateId, category: aggregateType },
-                  {
-                    projection: {
-                      [projectionFields[0]]: 1,
-                      [projectionFields[1]]: 1,
-                      _id: 0,
-                    },
-                  }
-                );
+              archived: false,
+              benchRun: true,
+              updatedAt: now,
+            });
+            await eventsCollection.insertOne({
+              aggregateId,
+              category: aggregateType,
+              eventType: "Created",
+              payload: {
+                name: "Benchmark Account",
+                createdAt: now.toISOString(),
+                field1: "value-bench",
+                field2: 0,
               },
-            ],
-            [
-              "events",
-              async () => {
-                const aggregateId = pickAggregateId();
-                await eventsCollection
-                  .find({ aggregateId, category: aggregateType })
-                  .sort({ createdAt: 1 })
-                  .limit(eventsLimit)
-                  .toArray();
-              },
-            ],
-            [
-              "apply",
-              async () => {
-                const aggregateId = pickAggregateId();
-                await eventsCollection.insertOne({
-                  aggregateId,
-                  category: aggregateType,
-                  eventType: "BenchApplied",
-                  payload: { marker: "apply", at: new Date() },
-                  benchRun: true,
-                  createdAt: new Date(),
-                });
-              },
-            ],
-            [
-              "create",
-              async () => {
-                const aggregateId = `bench-${randomUUID()}`;
-                const now = new Date();
-                await aggregatesCollection.insertOne({
-                  _id: aggregateId,
-                  aggregateId,
-                  category: aggregateType,
-                  state: {
-                    field1: "value-bench",
-                    field2: 0,
-                    name: "Benchmark Account",
-                    createdAt: now.toISOString(),
-                    archived: false,
-                  },
-                  archived: false,
-                  benchRun: true,
-                  updatedAt: now,
-                });
-                await eventsCollection.insertOne({
-                  aggregateId,
-                  category: aggregateType,
-                  eventType: "Created",
-                  payload: {
-                    name: "Benchmark Account",
-                    createdAt: now.toISOString(),
-                    field1: "value-bench",
-                    field2: 0,
-                  },
-                  benchRun: true,
-                  createdAt: now,
-                });
-              },
-            ],
+              benchRun: true,
+              createdAt: now,
+            });
+          },
+        ],
         [
           "archive",
           async () => {
@@ -375,37 +374,40 @@ test("benchmarks mongodb operations", async (t) => {
             });
           },
         ],
-            [
-              "patch",
-              async () => {
-                const aggregateId = pickAggregateId();
-                await aggregatesCollection.updateOne(
-                  { aggregateId, category: aggregateType },
-                  {
-                    $set: {
-                      "state.name": "New Name",
-                      updatedAt: new Date(),
-                    },
-                  }
-                );
-                await eventsCollection.insertOne({
-                  aggregateId,
-                  category: aggregateType,
-                  eventType: "Patched",
-                  payload: { name: "New Name", at: new Date() },
-                  benchRun: true,
-                  createdAt: new Date(),
-                });
-              },
-            ],
-          ],
-          {
-            onSkip: (label) =>
-              t.log(
-                `Skipping ${label} operation in mode "${benchRunMode}" for MongoDB benchmark`
-              ),
-          }
-        );
+        [
+          "patch",
+          async () => {
+            const aggregateId = pickAggregateId();
+            await aggregatesCollection.updateOne(
+              { aggregateId, category: aggregateType },
+              {
+                $set: {
+                  "state.name": "New Name",
+                  updatedAt: new Date(),
+                },
+              }
+            );
+            await eventsCollection.insertOne({
+              aggregateId,
+              category: aggregateType,
+              eventType: "Patched",
+              payload: { name: "New Name", at: new Date() },
+              benchRun: true,
+              createdAt: new Date(),
+            });
+          },
+        ],
+      ];
+
+      const operations = filterBenchOperations(benchOperations);
+
+      logRunModeNotice(
+        t,
+        "MongoDB",
+        datasetIndex,
+        benchOperations.length,
+        operations.length
+      );
 
       if (operations.length === 0) {
         t.log(

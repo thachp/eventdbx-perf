@@ -1,0 +1,201 @@
+
+> eventdbx-perf@ test /Users/thachp/repos/eventdbx-perf
+> npm run build && ava "dist/__tests__/**/*.spec.js"
+
+
+> build
+> tsc --project tsconfig.json
+
+
+  ✔ bench-mssql › benchmarks mssql operations (33.8s)
+    ℹ MSSQL dataset ready: test1 (1 records)
+    ℹ MSSQL benchmark running in write-only mode; read operations are disabled.
+    ℹ MSSQL test1 (1 records):
+      operation  throughput (ops/s)  latency       
+      ---------  ------------------  --------------
+      apply      206 ±4.99%          4.98 ms ±7.54%
+      create     112 ±3.24%          8.94 ms ±3.51%
+      archive    104 ±6.41%          9.74 ms ±8.10%
+      restore    113 ±3.24%          8.88 ms ±3.50%
+      patch      113 ±5.56%          8.99 ms ±7.16%
+
+    ℹ MSSQL dataset ready: test2 (10,000 records)
+    ℹ MSSQL test2 (10,000 records):
+      operation  throughput (ops/s)  latency       
+      ---------  ------------------  --------------
+      apply      215 ±4.26%          4.72 ms ±5.26%
+      create     108 ±5.26%          9.41 ms ±6.44%
+      archive    98.3 ±8.16%         10.4 ms ±8.20%
+      restore    107 ±6.95%          9.56 ms ±8.19%
+      patch      108 ±4.38%          9.33 ms ±5.24%
+
+    ℹ MSSQL dataset ready: test3 (100,000 records)
+    ℹ MSSQL test3 (100,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      228 ±4.16%          4.49 ms ±7.62% 
+      create     108 ±5.54%          9.38 ms ±5.74% 
+      archive    115 ±5.21%          8.78 ms ±6.57% 
+      restore    101 ±8.96%          10.2 ms ±10.36%
+      patch      105 ±6.57%          9.68 ms ±8.14% 
+
+    ℹ Skipping MSSQL benchmark – request timed out: Timeout: Request failed to complete in 15000ms
+  ✔ bench-postgres › benchmarks postgres operations (1m 20.1s)
+    ℹ Postgres dataset ready: test1 (1 records)
+    ℹ Postgres benchmark running in write-only mode; read operations are disabled.
+    ℹ Postgres test1 (1 records):
+      operation  throughput (ops/s)  latency       
+      ---------  ------------------  --------------
+      apply      1.88k ±2.67%        576 µs ±5.18% 
+      create     1.02k ±3.08%        1.03 ms ±4.86%
+      archive    1.07k ±2.52%        965 µs ±3.00% 
+      restore    1.14k ±2.68%        917 µs ±4.57% 
+      patch      1.15k ±1.76%        884 µs ±2.76% 
+
+    ℹ Postgres dataset ready: test2 (10,000 records)
+    ℹ Postgres test2 (10,000 records):
+      operation  throughput (ops/s)  latency       
+      ---------  ------------------  --------------
+      apply      2.13k ±1.90%        490 µs ±3.03% 
+      create     977 ±3.40%          1.10 ms ±7.27%
+      archive    1.06k ±2.64%        983 µs ±4.59% 
+      restore    1.11k ±2.32%        933 µs ±3.57% 
+      patch      1.07k ±2.20%        967 µs ±4.04% 
+
+    ℹ Postgres dataset ready: test3 (100,000 records)
+    ℹ Postgres test3 (100,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      1.86k ±2.61%        580 µs ±5.18%  
+      create     968 ±3.22%          1.08 ms ±3.93% 
+      archive    1.03k ±2.78%        1.06 ms ±10.70%
+      restore    900 ±4.51%          1.20 ms ±5.85% 
+      patch      937 ±3.08%          1.13 ms ±6.60% 
+
+    ℹ Postgres dataset ready: test4 (1,000,000 records)
+    ℹ Postgres test4 (1,000,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      2.18k ±1.82%        477 µs ±3.35%  
+      create     1.12k ±2.87%        970 µs ±9.31%  
+      archive    965 ±3.99%          1.19 ms ±15.99%
+      restore    1.01k ±4.40%        1.23 ms ±26.12%
+      patch      1.07k ±3.34%        1.02 ms ±6.72% 
+
+    ℹ Postgres dataset ready: test5 (2,000,000 records)
+    ℹ Postgres test5 (2,000,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      2.01k ±2.89%        555 µs ±6.30%  
+      create     1.13k ±2.72%        926 µs ±4.63%  
+      archive    956 ±4.32%          1.28 ms ±21.30%
+      restore    1.02k ±3.22%        1.05 ms ±6.46% 
+      patch      1.11k ±2.77%        940 µs ±3.83%  
+
+  ✔ bench-mongodb › benchmarks mongodb operations (2m 5.4s)
+    ℹ MongoDB dataset ready: test1 (1 records)
+    ℹ MongoDB benchmark running in write-only mode; read operations are disabled.
+    ℹ MongoDB test1 (1 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      964 ±2.55%          1.07 ms ±4.06% 
+      create     471 ±3.72%          2.20 ms ±6.18% 
+      archive    361 ±12.33%         3.61 ms ±19.59%
+      restore    456 ±3.70%          2.26 ms ±5.52% 
+      patch      467 ±3.60%          2.21 ms ±5.19% 
+
+    ℹ MongoDB dataset ready: test2 (10,000 records)
+    ℹ MongoDB test2 (10,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      1.05k ±2.69%        1.04 ms ±11.46%
+      create     534 ±3.30%          1.93 ms ±4.52% 
+      archive    476 ±4.74%          2.27 ms ±11.43%
+      restore    516 ±3.61%          2.06 ms ±10.51%
+      patch      521 ±2.29%          1.94 ms ±2.65% 
+
+    ℹ MongoDB dataset ready: test3 (100,000 records)
+    ℹ MongoDB test3 (100,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      1.12k ±2.71%        987 µs ±11.53% 
+      create     572 ±2.63%          1.79 ms ±4.37% 
+      archive    548 ±2.86%          1.91 ms ±8.87% 
+      restore    526 ±3.89%          2.03 ms ±10.16%
+      patch      548 ±2.40%          1.85 ms ±3.49% 
+
+    ℹ MongoDB dataset ready: test4 (1,000,000 records)
+    ℹ MongoDB test4 (1,000,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      1.17k ±2.14%        879 µs ±3.55%  
+      create     606 ±3.53%          1.77 ms ±10.52%
+      archive    549 ±3.67%          1.94 ms ±10.15%
+      restore    547 ±3.82%          1.97 ms ±11.05%
+      patch      454 ±6.47%          2.44 ms ±10.61%
+
+    ℹ MongoDB dataset ready: test5 (2,000,000 records)
+    ℹ MongoDB test5 (2,000,000 records):
+      operation  throughput (ops/s)  latency        
+      ---------  ------------------  ---------------
+      apply      1.26k ±1.87%        849 µs ±10.61% 
+      create     617 ±2.43%          1.66 ms ±4.08% 
+      archive    580 ±3.46%          1.84 ms ±10.96%
+      restore    558 ±3.79%          1.92 ms ±10.72%
+      patch      605 ±1.79%          1.67 ms ±2.57% 
+
+  ✔ bench-eventdbx › benchmarks eventdbx control operations (23m 1s)
+    ℹ EventDBX control dataset ready: test1 (1 records)
+    ℹ EventDBX benchmark running in write-only mode; read operations are disabled.
+    ℹ EventDBX test1:
+      operation  throughput (ops/s)  latency       
+      ---------  ------------------  --------------
+      apply      1.64k ±4.18%        786 µs ±13.37%
+      create     1.84k ±2.48%        575 µs ±3.89% 
+      archive    1.44k ±2.80%        745 µs ±5.65% 
+      restore    1.47k ±2.40%        725 µs ±5.89% 
+      patch      1.88k ±1.82%        549 µs ±2.74% 
+
+    ℹ EventDBX control dataset ready: test2 (10,000 records)
+    ℹ EventDBX test2:
+      operation  throughput (ops/s)  latency      
+      ---------  ------------------  -------------
+      apply      2.08k ±1.51%        494 µs ±2.56%
+      create     1.99k ±1.82%        529 µs ±5.47%
+      archive    1.61k ±1.76%        639 µs ±3.36%
+      restore    1.67k ±1.64%        609 µs ±1.76%
+      patch      2.10k ±2.19%        510 µs ±5.20%
+
+    ℹ EventDBX control dataset ready: test3 (100,000 records)
+    ℹ EventDBX test3:
+      operation  throughput (ops/s)  latency      
+      ---------  ------------------  -------------
+      apply      1.98k ±1.68%        533 µs ±6.68%
+      create     1.70k ±1.62%        604 µs ±2.82%
+      archive    1.35k ±1.50%        752 µs ±1.72%
+      restore    1.38k ±2.37%        760 µs ±4.21%
+      patch      1.77k ±1.66%        577 µs ±1.94%
+
+    ℹ EventDBX control dataset ready: test4 (1,000,000 records)
+    ℹ EventDBX test4:
+      operation  throughput (ops/s)  latency       
+      ---------  ------------------  --------------
+      apply      1.66k ±2.34%        640 µs ±5.25% 
+      create     1.74k ±1.92%        592 µs ±2.56% 
+      archive    1.42k ±2.02%        730 µs ±3.74% 
+      restore    1.36k ±2.41%        805 µs ±10.60%
+      patch      1.86k ±2.01%        556 µs ±2.35% 
+
+    ℹ EventDBX control dataset ready: test5 (2,000,000 records)
+    ℹ EventDBX test5:
+      operation  throughput (ops/s)  latency      
+      ---------  ------------------  -------------
+      apply      2.22k ±0.89%        455 µs ±1.23%
+      create     2.13k ±1.01%        475 µs ±1.12%
+      archive    1.62k ±1.95%        644 µs ±4.30%
+      restore    1.73k ±1.58%        590 µs ±2.36%
+      patch      2.25k ±1.61%        474 µs ±9.48%
+
+  ─
+
+  4 tests passed
