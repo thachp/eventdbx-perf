@@ -1,4 +1,6 @@
-import "dotenv/config";
+import dotenvFlow from "dotenv-flow";
+dotenvFlow.config();
+
 import { Bench } from "tinybench";
 
 export type AsyncOperation = () => Promise<unknown>;
