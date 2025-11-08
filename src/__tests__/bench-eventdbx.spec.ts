@@ -4,10 +4,10 @@ import {
   addBenchTask,
   aggregateType,
   benchRunMode,
-  filterBenchOperations,
   createBench,
   datasetSizes,
   eventsLimit,
+  filterBenchOperations,
   formatAggregateId,
   listLimit,
   logDatasetPreparation,
@@ -41,7 +41,10 @@ type ControlClientOptions = {
   token: string;
 };
 
-const parsePort = (value: string | undefined, fallback: number): number => {
+const parsePositiveInteger = (
+  value: string | undefined,
+  fallback: number
+): number => {
   if (value === undefined) {
     return fallback;
   }
@@ -49,11 +52,19 @@ const parsePort = (value: string | undefined, fallback: number): number => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
+const parsePort = (value: string | undefined, fallback: number): number =>
+  parsePositiveInteger(value, fallback);
+
 const integrationOptions: ControlClientOptions = {
   ip: runtimeEnv.EVENTDBX_TEST_IP ?? baseOptions.ip,
   port: parsePort(runtimeEnv.EVENTDBX_TEST_PORT, baseOptions.port),
   token: runtimeEnv.EVENTDBX_TEST_TOKEN ?? baseOptions.token,
 };
+
+const defaultSeedConcurrency = parsePositiveInteger(
+  runtimeEnv.EVENTDBX_SEED_CONCURRENCY,
+  8
+);
 
 type SeedResult = { success: true } | { success: false; reason: string };
 
@@ -75,11 +86,24 @@ const ensureEventdbxDataset = async (
     return { success: true };
   }
 
-  for (let index = 1; index <= limit; index += 1) {
+  const concurrency = Math.max(1, Math.min(limit, defaultSeedConcurrency));
+  let seedFailureReason: string | undefined;
+  let nextIndex = 1;
+
+  const takeNextIndex = () => {
+    if (nextIndex > limit) {
+      return undefined;
+    }
+    const current = nextIndex;
+    nextIndex += 1;
+    return current;
+  };
+
+  const seedAggregate = async (index: number) => {
     const aggregateId = formatAggregateId(index);
     const now = new Date().toISOString();
     try {
-      const test = await client.create(aggregateType, aggregateId, "created", {
+      await client.create(aggregateType, aggregateId, "created", {
         payload: {
           name: `Account ${aggregateId}`,
           field1: `value-${aggregateId}`,
@@ -92,10 +116,36 @@ const ensureEventdbxDataset = async (
     } catch (error) {
       const message = toErrorMessage(error);
       if (/already exists/i.test(message) || /conflict/i.test(message)) {
-        continue;
+        return;
       }
-      return { success: false, reason: message };
+      throw message;
     }
+  };
+
+  const worker = async () => {
+    while (true) {
+      if (seedFailureReason) {
+        return;
+      }
+
+      const index = takeNextIndex();
+      if (index === undefined) {
+        return;
+      }
+
+      try {
+        await seedAggregate(index);
+      } catch (error) {
+        seedFailureReason = toErrorMessage(error);
+        return;
+      }
+    }
+  };
+
+  await Promise.all(Array.from({ length: concurrency }, () => worker()));
+
+  if (seedFailureReason) {
+    return { success: false, reason: seedFailureReason };
   }
 
   return { success: true };
@@ -140,10 +190,19 @@ test("benchmarks eventdbx control operations", async (t) => {
         return aggregateId;
       };
 
+      let listCursor: string | undefined;
+      const aggregateEventCursors = new Map<string, string | undefined>();
+
       const benchOperations: Array<[string, AsyncOperation]> = [
         [
           "list",
-          () => client.list(aggregateType, { take: pageSize, skip: 0 }),
+          async () => {
+            const result = await client.list(aggregateType, {
+              take: pageSize,
+              cursor: listCursor,
+            });
+            listCursor = result.nextCursor ?? undefined;
+          },
         ],
         ["get", () => client.get(aggregateType, pickAggregateId())],
         [
@@ -157,11 +216,18 @@ test("benchmarks eventdbx control operations", async (t) => {
         ],
         [
           "events",
-          () =>
-            client.events(aggregateType, pickAggregateId(), {
-              skip: 0,
+          async () => {
+            const aggregateId = pickAggregateId();
+            const cursor = aggregateEventCursors.get(aggregateId);
+            const result = await client.events(aggregateType, aggregateId, {
               take: eventWindow,
-            }),
+              cursor,
+            });
+            aggregateEventCursors.set(
+              aggregateId,
+              result.nextCursor ?? undefined
+            );
+          },
         ],
         [
           "apply",
